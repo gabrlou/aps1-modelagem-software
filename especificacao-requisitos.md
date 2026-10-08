@@ -70,7 +70,7 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
 - Pagamento, faturamento, convênios e emitente de nota fiscal;
 - Teleconsulta/vídeo;
 - Cadastro de clínicas/estabelecimentos múltiplos (multi-tenant);
-- Aplicativo nativo para relojoaria de dispositivos — considera-se **web app responsivo** (ver Premissa P-01).
+- Aplicativo nativo para relojoaria de dispositivos — considera-se **web app responsivo** [(Ver Premissa P-01)](#12-premissas-e-decisões-de-projeto).
 
 ---
 
