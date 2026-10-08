@@ -104,7 +104,7 @@ Atores: Paciente, Médico, Secretário, Sistema de Notificação.
 
 Fluxo principal sugerido:
 
-Paciente escolhe especialidade → seleciona médico → visualiza horários → agenda consulta → recebe confirmação → (opcional) cancela ou remarca.
+Paciente escolhe especialidade → seleciona médico → visualiza horários disponíveis → agenda consulta → recebe confirmação → (opcional) cancela ou remarca.
 
 Dicas de classes: Paciente, Medico, Secretario, Especialidade, Consulta, Agenda, Horario, Notificacao
 ```
