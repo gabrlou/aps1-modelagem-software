@@ -76,7 +76,7 @@ Em conformidade com o escopo priorizado para a entrega acadêmica, foram selecio
 
 **Processo representado:** o paciente autenticado percorre uma jornada em cinco etapas: seleção de especialidade, seleção de médico, escolha de data e horário livre, revisão do resumo e confirmação final. O sistema valida a disponibilidade do horário de forma atômica (prevenindo corridas), grava a consulta como `AGENDADA`, ocupa o horário e dispara notificação em segundo plano. São representados os caminhos alternativos de inexistência de horários livres, de disputa concorrente pelo mesmo horário (quando outro paciente confirma frações de segundo antes) e de falha na entrega da notificação.
 
-<img width="1938" height="1510" alt="DA-01" src="https://github.com/user-attachments/assets/b1093cc8-6949-4fe0-83f8-eba97fe3325e" />
+![DA-01 — Fluxo Principal de Agendamento](./assets/DA-01.svg)
 
 ```plantuml
 @startuml DA01_Agendamento
@@ -158,7 +158,7 @@ endif
 
 **Processo representado:** o usuário (paciente, secretário ou médico) seleciona uma consulta futura (`AGENDADA` ou `CONFIRMADA`), solicita o cancelamento e deve obrigatoriamente informar o motivo. Com o motivo preenchido, o sistema valida se a solicitação foi feita com pelo menos 2 horas de antecedência. Em caso positivo, o status da consulta muda para `CANCELADA`, o slot de horário volta para `LIVRE`, a ação é registrada em auditoria e as notificações são disparadas por e-mail e WhatsApp.
 
-<img width="1055" height="962" alt="DA-02" src="https://github.com/user-attachments/assets/9f4c327b-e82a-4102-a148-a47d7fc3fb96" />
+![DA-02 — Cancelamento de Consulta](./assets/DA-02.svg)
 
 ```plantuml
 @startuml DA02_Cancelamento
@@ -209,7 +209,7 @@ Foram elaborados dois diagramas de sequência focados nos cenários mais importa
 
 **Cenário representado:** paciente autenticado realiza o agendamento, com tratamento para horário indisponível, concorrência no momento da reserva e contingência em falhas de notificação.
 
-<img width="1427" height="1501" alt="DS-01" src="https://github.com/user-attachments/assets/e500ddd7-155a-4e63-be41-8511d5b80169" />
+![DS-01 — Agendamento Completo](./assets/DS-01.svg)
 
 ```plantuml
 @startuml DS01_Agendamento
@@ -309,7 +309,7 @@ deactivate S
 
 **Cenário representado:** secretário autenticado abre a lista de consultas pendentes de confirmação, seleciona um agendamento e executa a confirmação no sistema após contato com o paciente, tratando cenários concorrentes e hipótese de recusa.
 
-<img width="1253" height="1285" alt="DS-02" src="https://github.com/user-attachments/assets/81d5a91a-03d0-4fce-b19f-4127dccfea9c" />
+![DS-02 — Confirmação de Consulta](./assets/DS-02.svg)
 
 ```plantuml
 @startuml DS02_Confirmacao
@@ -390,7 +390,7 @@ deactivate S
 
 Apresentar a estrutura orientada a objetos do sistema: classes principais, atributos tipados, métodos essenciais, enumerações e relacionamentos (herança, associação, composição e autorrelação).
 
-<img width="1678" height="1531" alt="Classes" src="https://github.com/user-attachments/assets/4d3727b7-3a7d-43ca-a832-4a41628bf323" />
+![Diagrama de Classes — Nível Macro](./assets/Classes.svg)
 
 ```plantuml
 @startuml DC_Classes
