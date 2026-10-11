@@ -118,7 +118,7 @@ Cada grupo deverá escolher um dos 4 temas propostos e, a partir da descrição 
 
 - Diagrama de Atividades – representando o fluxo principal da aplicação.
 - Diagrama de Sequência – mostrando a interação entre os atores e o sistema.
--cDiagrama de Classes (macro) – apresentando as principais classes, atributos, métodos e relacionamentos.
+- Diagrama de Classes (macro) – apresentando as principais classes, atributos, métodos e relacionamentos.
 
 Não é necessário implementar código. O foco está na modelagem correta, na clareza dos diagramas e na coerência entre eles.
 
