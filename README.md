@@ -9,6 +9,73 @@
 
 # Diagrama de Atividades
 
+## Diagrama de Atividade 1 - Agendamento de uma consulta
+- Objetivo: Permitir que o usuário do sistema reserve um horário para atendimento
+- Ator: Usuário do sistema
+- Requisito: Agendar consulta
+
+```mermaid
+flowchart TD
+    INI((Início)) --> AUTH{Sessão autenticada?}
+
+    AUTH -- Não --> LOGIN[Redirecionar para login]
+    LOGIN --> REAUTH{Autenticação realizada?}
+    REAUTH -- Não --> FIMCANCEL((Fim sem agendamento))
+    REAUTH -- Sim --> ESP[Paciente seleciona especialidade]
+    AUTH -- Sim --> ESP
+
+    ESP --> MED[ Sistema lista médicos ativos da especialidade]
+    MED --> SELMED[Paciente seleciona médico]
+    SELMED --> HOR[ Sistema exibe horários disponíveis]
+
+    HOR --> DISP{Existem horários disponíveis?}
+    DISP -- Não --> SUG[ Sugerir próximos dias com vagas]
+    SUG --> HOR
+
+    DISP -- Sim --> SELHOR[Paciente seleciona data e horário]
+    SELHOR --> JANELA{Horário dentro da janela permitida?}
+
+    JANELA -- Não --> BLOQ[Bloquear seleção e informar restrição]
+    BLOQ --> HOR
+    JANELA -- Sim --> RES[ Sistema exibe resumo da consulta]
+    RES --> CONF{Paciente confirma?}
+
+    CONF -- Não --> FIMCANCEL
+    CONF -- Sim --> SESSAO{Sessão ainda válida?}
+    SESSAO -- Não --> LOGIN
+    SESSAO -- Sim --> LOCK[Validar disponibilidade com lock atômico]
+
+    LOCK --> LIVRE{Slot continua disponível?}
+    LIVRE -- Não --> OCUP[Exibir: Este horário acabou de ser ocupado]
+    OCUP --> HOR
+
+    LIVRE -- Sim --> PERSIST[Gravar consulta com status AGENDADA]
+    PERSIST --> PERSISTOK{Persistência bem-sucedida?}
+
+    PERSISTOK -- Não --> ROLLBACK[Executar rollback total]
+    ROLLBACK --> ERRO[Exibir mensagem de erro]
+    ERRO --> FIMERRO((Fim com falha))
+
+    PERSISTOK -- Sim --> AUD[Registrar auditoria CONSULTA_CRIADA]
+    AUD --> FILA[Registrar evento na fila de notificações]
+    FILA --> ENVIO{Notificação enviada?}
+
+    ENVIO -- Sim --> COMPROV[Exibir comprovante com código da consulta]
+    ENVIO -- Não --> RETRY[Manter agendamento e programar retry da notificação]
+    RETRY --> COMPROV
+
+    COMPROV --> FIMSUCESSO((Fim com sucesso))
+
+    classDef inicioFim fill:#e8e8e8,stroke:#333,color:#111
+    classDef atividade fill:#dceeff,stroke:#356b9a,color:#111
+    classDef decisao fill:#fff0cc,stroke:#a87900,color:#111
+    classDef excecao fill:#ffe0e0,stroke:#b33,color:#111
+
+    class INI,FIMCANCEL,FIMERRO,FIMSUCESSO inicioFim
+    class ESP,MED,SELMED,HOR,SUG,SELHOR,RES,BLOQ,LOCK,OCUP,PERSIST,ROLLBACK,ERRO,AUD,FILA,RETRY,COMPROV,LOGIN atividade
+    class AUTH,REAUTH,DISP,JANELA,CONF,SESSAO,LIVRE,PERSISTOK,ENVIO decisao
+```
+
 # Diagrama de Sequência
 
 # Diagrama de Classes
