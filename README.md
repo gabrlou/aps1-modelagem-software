@@ -19,7 +19,7 @@ Modelagem UML de um sistema de agendamento de consultas médicas (APS 1).
 - Objetivo: Permitir que o paciente reserve um horário para atendimento
 - Atores (raias): Paciente, Sistema e Sistema de Notificação
 - Requisitos: RF-02, RF-06 a RF-10, RF-20 e RF-21 (fluxo F-01); regras RN-09 a RN-13, RN-16, RN-20 e RN-25
-- Fork/join: depois de registrar o evento na fila, a exibição do comprovante e o envio assíncrono da notificação seguem em paralelo (RNF-12) e se juntam antes do fim; a falha do envio não altera o resultado do agendamento (RN-25)
+- Fork/join: depois de registrar o evento na fila, a exibição do comprovante e o envio assíncrono das notificações seguem em paralelo (RNF-12) e, dentro do envio, e-mail e WhatsApp também saem em paralelo, cada um com suas tentativas; tudo se junta antes do fim, e a falha do envio não altera o resultado do agendamento (RN-25)
 - Fluxos alternativos e de exceção: sem vagas, horário ocupado, horário fora da janela, sessão expirada, falha de gravação e falha de notificação (rosa no diagrama)
 
 ![DA-01 — Diagrama de atividades: agendamento de consulta](assets/DA01_Agendamento.svg)
@@ -31,7 +31,7 @@ Modelagem UML de um sistema de agendamento de consultas médicas (APS 1).
 - Atores: Paciente (principal) e Sistema de Notificação (secundário, não humano)
 - Requisitos: RF-06 a RF-10, RF-20 e RF-21 (fluxo F-01); regras RN-09, RN-10, RN-12, RN-13, RN-16, RN-20 e RN-25
 - Coerência: segue o Diagrama de Atividades 1 (A1, A2, A3, E1, E2 e E3) e usa os métodos do Diagrama de Classes (`Agenda.getHorariosDisponiveis`, `Horario.estaDisponivel`, `Horario.ocupar`, `Horario.liberar`, `Auditoria.registrar`, `Notificacao.registrarEnvio`, `Notificacao.registrarFalha` e `Paciente.agendar`)
-- Convenções: `Sistema` representa a camada de aplicação, que orquestra as chamadas; `Consulta` e `Notificacao` aparecem como objetos criados (`<<create>>`); o bloco `par` mostra, em paralelo, o comprovante e o envio da notificação (fork do Diagrama de Atividades)
+- Convenções: `Sistema` representa a camada de aplicação, que orquestra as chamadas; `Consulta` e as duas `Notificacao` (EMAIL e WHATSAPP) aparecem como objetos criados (`<<create>>`); o bloco `par` mostra, em paralelo, o comprovante e o envio por e-mail e por WhatsApp, cada canal com sua `Notificacao` (forks do Diagrama de Atividades)
 
 ![DS-01 — Diagrama de sequência: agendamento de consulta](assets/DS01_Agendamento.svg)
 

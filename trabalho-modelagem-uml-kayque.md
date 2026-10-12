@@ -54,7 +54,7 @@ O sistema conta com cinco atores bem definidos:
 4. **Administrador:** responsável pelos cadastros-base. Cadastra e mantém médicos e secretários e gerencia o catálogo de especialidades (ativar e desativar). Não agenda nem altera consultas.
 5. **Sistema de Notificação (`<<system>>`):** componente secundário que roda em segundo plano. Consome os eventos gerados pelas operações da clínica e envia as mensagens em paralelo por e-mail e WhatsApp, com fila de retentativas automáticas caso ocorra instabilidade temporária na rede, garantindo que o agendamento nunca trave por falha de envio.
 
-> **Observação:** a descrição inicial do tema lista quatro atores. O **Administrador** foi acrescentado pelo grupo (o professor permite atores adicionais, sem limite) porque alguém precisa cadastrar médicos, secretários e especialidades; sem esse ator, o catálogo ficaria sem responsável (Premissa P-19 da especificação).
+> **Observação:** a descrição inicial do tema lista quatro atores. O **Administrador** foi acrescentado pelo grupo (o professor permite atores adicionais, sem limite) porque alguém precisa cadastrar médicos, secretários e especialidades; sem esse ator, o catálogo ficaria sem responsável.
 
 ### 1.4 Módulos Funcionais e Regras de Negócio
 
@@ -101,13 +101,11 @@ Cada evento gera uma notificação por destinatário e por canal (e-mail e Whats
 - Há um único contexto de clínica.
 - A auditoria cobre eventos de negócio (criar, confirmar, cancelar, remarcar, bloquear horário e alterar cadastro), não leituras.
 
-O detalhamento completo (requisitos funcionais e não funcionais, regras de negócio RN-01 a RN-28, fluxos e premissas) está em `especificacao-requisitos.md`. Os identificadores RF e RN usados neste trabalho vêm desse documento.
-
 ---
 
 ## 2. Diagramas de Atividades
 
-Foi elaborado um diagrama de atividades completo, o **DA-01**, que reúne o fluxo principal de agendamento e todos os seus fluxos alternativos e de exceção. Por já cumprir o que foi pedido (fluxo principal com fluxos alternativos), o grupo optou por não criar diagramas separados para cancelamento, remarcação e confirmação; esses processos estão descritos nas seções 1.4 e 1.5 e nos fluxos F-02, F-03 e F-05 da especificação (decisão DM-11).
+Foi elaborado um diagrama de atividades completo, o **DA-01**, que reúne o fluxo principal de agendamento e todos os seus fluxos alternativos e de exceção. Por já cumprir o que foi pedido (fluxo principal com fluxos alternativos), o grupo optou por não criar diagramas separados para cancelamento, remarcação e confirmação; esses processos estão descritos nas seções 1.4 e 1.5 (decisão DM-11).
 
 ### 2.1 DA-01 — Agendamento de Consulta
 
@@ -115,9 +113,7 @@ Foi elaborado um diagrama de atividades completo, o **DA-01**, que reúne o flux
 
 **Atores (raias):** Paciente, Sistema e Sistema de Notificação.
 
-**Requisitos:** RF-02, RF-06 a RF-10, RF-20 e RF-21 (fluxo F-01). **Regras:** RN-09 a RN-13, RN-16, RN-20 e RN-25.
-
-**Processo representado:** o paciente autenticado percorre a jornada de agendamento: seleciona a especialidade, o médico e um horário livre, revisa o resumo e confirma. O sistema reserva o horário de forma atômica (prevenindo corridas), grava a consulta como `AGENDADA`, marca o horário como `OCUPADO` e registra a auditoria. Em seguida, o fluxo se divide em dois ramos paralelos (*fork*): o sistema exibe o comprovante ao paciente, enquanto o Sistema de Notificação envia as mensagens por e-mail e WhatsApp, com até 3 tentativas. Os dois ramos se juntam (*join*) no fim, mas o comprovante **não espera** o envio.
+**Processo representado:** o paciente autenticado percorre a jornada de agendamento: seleciona a especialidade, o médico e um horário livre, revisa o resumo e confirma. O sistema reserva o horário de forma atômica (prevenindo corridas), grava a consulta como `AGENDADA`, marca o horário como `OCUPADO` e registra a auditoria. Em seguida, o fluxo se divide em dois ramos paralelos (*fork*): o sistema exibe o comprovante ao paciente, enquanto o Sistema de Notificação envia as mensagens. Esse segundo ramo se subdivide em outros dois, também em paralelo: um para o e-mail e outro para o WhatsApp, cada um com até 3 tentativas e com seu próprio resultado (`ENVIADA` ou `FALHOU`). Todos se juntam (*join*) no fim, mas o comprovante **não espera** o envio.
 
 ![DA-01 — Diagrama de atividades: agendamento de consulta](assets/DA01_Agendamento.svg)
 
@@ -218,30 +214,45 @@ fork
   :Visualizar comprovante;
 fork again
   |Sistema de Notificação|
-  repeat
-    :Enviar mensagem\n(e-mail e WhatsApp);
-  backward:Aguardar (backoff);
-  repeat while (Falha no envio e\ntentativas < 3?) is (sim) not (não)
-  if (Entrega confirmada?) then (sim)
-    :Registrar notificação ENVIADA;
-  else (não)
-    #FFE0E0:Registrar notificação FALHOU\n(a consulta continua AGENDADA);
-  endif
+  fork
+    repeat
+      :Enviar mensagem\npor e-mail;
+    backward:Aguardar (backoff);
+    repeat while (Falha no envio e\ntentativas < 3?) is (sim) not (não)
+    if (Entrega confirmada?) then (sim)
+      :Registrar notificação\nde e-mail ENVIADA;
+    else (não)
+      #FFE0E0:Registrar notificação\nde e-mail FALHOU;
+    endif
+  fork again
+    repeat
+      :Enviar mensagem\npor WhatsApp;
+    backward:Aguardar (backoff);
+    repeat while (Falha no envio e\ntentativas < 3?) is (sim) not (não)
+    if (Entrega confirmada?) then (sim)
+      :Registrar notificação\nde WhatsApp ENVIADA;
+    else (não)
+      #FFE0E0:Registrar notificação\nde WhatsApp FALHOU;
+    endif
+  end fork
 end fork
 stop
 
 legend right
   Rosa: fluxo alternativo ou de exceção
-  Fork/join: o comprovante não espera o envio da notificação
+  Fork/join externo: o comprovante não espera o envio das notificações
+  Fork/join interno: e-mail e WhatsApp são enviados em paralelo,
+  cada canal com suas tentativas; a falha de um não afeta o outro
+  nem a consulta, que continua AGENDADA
 endlegend
 @enduml
 ```
 
 </details>
 
-**Explicação:** o diagrama usa raias (*swimlanes*) para separar o que é ação do paciente, processamento do sistema e envio do Sistema de Notificação. Os laços (`repeat`) representam os retornos à escolha de horário (sem vagas, horário fora da janela e horário ocupado) e a retomada do resumo após novo login. Os nós rosa marcam fluxos alternativos e de exceção. O *fork/join* representa o paralelismo real do processo: exibir o comprovante e enviar a notificação acontecem ao mesmo tempo, e uma falha de envio nunca desfaz o agendamento (RN-25).
+**Explicação:** o diagrama usa raias (*swimlanes*) para separar o que é ação do paciente, processamento do sistema e envio do Sistema de Notificação. Os laços (`repeat`) representam os retornos à escolha de horário (sem vagas, horário fora da janela e horário ocupado) e a retomada do resumo após novo login. Os nós rosa marcam fluxos alternativos e de exceção. O *fork/join* representa o paralelismo real do processo: exibir o comprovante e enviar a notificação acontecem ao mesmo tempo, e uma falha de envio nunca desfaz o agendamento.
 
-**Cobertura dos fluxos de F-01 no DA-01:**
+**Cobertura dos fluxos alternativos (A) e de exceção (E) no DA-01:**
 
 | Fluxo | Onde aparece no diagrama |
 |---|---|
@@ -265,8 +276,6 @@ Foi elaborado um diagrama de sequência completo, o **DS-01**, sobre o mesmo cen
 **Objetivo:** detalhar a sequência de mensagens durante o agendamento, destacando a reserva atômica do horário, a criação da consulta e o envio assíncrono das notificações.
 
 **Cenário representado:** paciente autenticado agenda uma consulta, com tratamento para ausência de horários, horário fora da janela, sessão expirada, concorrência na reserva, falha de gravação e falha de notificação.
-
-**Requisitos:** RF-06 a RF-10, RF-20 e RF-21. **Regras:** RN-09, RN-10, RN-12, RN-13, RN-16, RN-20 e RN-25.
 
 ![DS-01 — Diagrama de sequência: agendamento de consulta](assets/DS01_Agendamento.svg)
 
@@ -313,7 +322,7 @@ else existem horários disponíveis
   S --> Paciente : exibirHorarios(horáriosLivres)
   Paciente -> S : selecionarHorario(idHorario)
 
-  alt horário fora da janela permitida (E3 / RN-12)
+  alt horário fora da janela permitida (E3)
     S --> Paciente : bloquearSelecao(restrição)
     note right of S : volta à lista de horários
   else horário dentro da janela
@@ -329,7 +338,7 @@ else existem horários disponíveis
       note right of H : operação atômica (lock do slot)
       activate H
 
-      alt horário já ocupado (A2 / RN-16)
+      alt horário já ocupado (A2)
         H --> S : HorarioIndisponivelException
         deactivate H
         S -> AG : getHorariosDisponiveis(intervalo)
@@ -343,7 +352,7 @@ else existem horários disponíveis
 
         create Consulta
         S -> Consulta : <<create>> (paciente, médico, especialidade, horário)
-        note right of Consulta : status inicial AGENDADA (RN-13)
+        note right of Consulta : status inicial AGENDADA
 
         alt falha de persistência (E2)
           Consulta --> S : erro de gravação
@@ -353,26 +362,43 @@ else existem horários disponíveis
         else persistência bem-sucedida
           Consulta --> S : consulta AGENDADA (código)
           S -> AUD : registrar(CONSULTA_CRIADA)
-          create Notificacao
-          S -> Notificacao : <<create>> (AGENDAMENTO, PENDENTE)
-          note right of Notificacao : um registro por canal (e-mail e WhatsApp)
+          create participant "Notificacao (EMAIL)" as NotifEmail
+          S -> NotifEmail : <<create>> (AGENDAMENTO, EMAIL, PENDENTE)
+          create participant "Notificacao (WHATSAPP)" as NotifWhats
+          S -> NotifWhats : <<create>> (AGENDAMENTO, WHATSAPP, PENDENTE)
+          note right of NotifWhats : um registro por canal (e-mail e WhatsApp)
 
           par comprovante ao paciente
             S --> Paciente : comprovante(códigoConsulta)
-          else envio assíncrono da notificação (RNF-12 / RN-25)
+          else envio assíncrono por e-mail
             loop até 3 tentativas, com backoff entre elas
-              Notificacao ->> SN : enviar(destinatário, canal, mensagem)
+              NotifEmail ->> SN : enviar(destinatário, EMAIL, mensagem)
               break entrega confirmada
-                SN --> Notificacao : confirmação de entrega
-                Notificacao -> Notificacao : registrarEnvio()
-                SN ->> Paciente : mensagem de agendamento
+                SN --> NotifEmail : confirmação de entrega
+                NotifEmail -> NotifEmail : registrarEnvio()
+                SN ->> Paciente : mensagem de agendamento por e-mail
               end
-              SN --> Notificacao : falha na entrega (A3)
-              Notificacao -> Notificacao : registrarFalha()
+              SN --> NotifEmail : falha na entrega (A3)
+              NotifEmail -> NotifEmail : registrarFalha()
             end
-            note over Notificacao
+            note over NotifEmail
               Após 3 falhas o status fica FALHOU
-              e a consulta permanece AGENDADA
+              neste canal; a consulta permanece AGENDADA
+            end note
+          else envio assíncrono por WhatsApp
+            loop até 3 tentativas, com backoff entre elas
+              NotifWhats ->> SN : enviar(destinatário, WHATSAPP, mensagem)
+              break entrega confirmada
+                SN --> NotifWhats : confirmação de entrega
+                NotifWhats -> NotifWhats : registrarEnvio()
+                SN ->> Paciente : mensagem de agendamento por WhatsApp
+              end
+              SN --> NotifWhats : falha na entrega (A3)
+              NotifWhats -> NotifWhats : registrarFalha()
+            end
+            note over NotifWhats
+              Após 3 falhas o status fica FALHOU
+              neste canal; o outro canal não é afetado
             end note
           end
         end
@@ -390,12 +416,12 @@ deactivate S
 
 - **Reserva atômica:** o horário é reservado por uma única chamada, `Horario.ocupar()`, que lança `HorarioIndisponivelException` se outro paciente já tomou o slot (mensagens 17 e 18). Assim não existe um intervalo entre "verificar" e "ocupar" em que duas reservas possam passar juntas.
 - **Rollback:** se a gravação da consulta falha, o sistema devolve o horário com `Horario.liberar()` (mensagem 25) e informa o erro, sem enviar nenhuma notificação.
-- **Criação de objetos:** `Consulta` e `Notificacao` aparecem como objetos criados durante o cenário (setas `<<create>>`, mensagens 23 e 29). A mensagem 15, `agendar(...)`, corresponde a `Paciente.agendar(medico, especialidade, horario)`.
-- **Paralelismo:** o bloco `par` mostra que o comprovante (mensagem 30) e o envio da notificação acontecem em paralelo, como o *fork* do DA-01. As setas com ponta aberta (`->>`) são mensagens assíncronas.
-- **Retry:** o laço (mensagens 31 a 36) tenta o envio até 3 vezes. Se a entrega é confirmada, o bloco `break` encerra o laço. Após 3 falhas, o status fica `FALHOU`, e a consulta permanece `AGENDADA`.
+- **Criação de objetos:** `Consulta` e as duas `Notificacao` (uma por canal) aparecem como objetos criados durante o cenário (setas `<<create>>`, mensagens 23, 29 e 30). A mensagem 15, `agendar(...)`, corresponde a `Paciente.agendar(medico, especialidade, horario)`.
+- **Paralelismo:** o bloco `par` mostra que o comprovante (mensagem 31), o envio por e-mail e o envio por WhatsApp acontecem em paralelo, como os *forks* do DA-01. As setas com ponta aberta (`->>`) são mensagens assíncronas.
+- **Retry por canal:** cada canal tem o seu laço (mensagens 32 a 37 para e-mail e 38 a 43 para WhatsApp), que tenta o envio até 3 vezes. Se a entrega é confirmada, o bloco `break` encerra o laço. Após 3 falhas, o status fica `FALHOU` naquele canal; o outro canal não é afetado e a consulta permanece `AGENDADA`.
 - **Participante `Sistema`:** representa a camada de aplicação, que orquestra as chamadas. As mensagens enviadas a ele (`iniciarAgendamento`, `selecionarMedico` e outras) são operações desse controlador, e não métodos das classes de domínio (decisão DM-03).
 
-**Correspondência com os fluxos de F-01:**
+**Correspondência com os fluxos alternativos (A) e de exceção (E):**
 
 | Fluxo | Mensagens |
 |---|---|
@@ -404,7 +430,7 @@ deactivate S
 | E1 — sessão expirada | 16 |
 | A2 — horário ocupado | 17 a 21 |
 | E2 — falha de persistência | 24 a 26 |
-| A3 — falha na notificação | 35 e 36 (laço com até 3 tentativas) |
+| A3 — falha na notificação | 36 e 37 (e-mail) e 42 e 43 (WhatsApp), em laços com até 3 tentativas |
 
 ---
 
@@ -501,7 +527,6 @@ abstract class Usuario {
   # senhaHash: String
   # telefone: String
   # status: StatusUsuario
-  # canalPreferido: Canal [0..1]
   # criadoEm: DateTime
   + autenticar(email, senha): boolean
   + alterarSenha(atual, nova): void
@@ -641,14 +666,9 @@ Consulta "0..*" -- "0..1" Usuario : confirmadaPor >
 Consulta "0..*" -- "0..1" Usuario : canceladaPor >
 Usuario "1" -- "0..*" Auditoria : registra >
 
-note right of Usuario
-  DECISÃO PENDENTE (equipe): manter ou remover
-  canalPreferido. Ver seção 6.5 do trabalho.
-end note
-
 note bottom of Horario
   Histórico: várias consultas ao longo do tempo,
-  no máximo 1 ativa (RN-16)
+  no máximo 1 ativa
 end note
 
 @enduml
@@ -660,7 +680,7 @@ end note
 
 **Notação:** `+` indica visibilidade pública, `-` privada e `#` protegida. Os atributos de `Usuario` são protegidos (`#`), pois as subclasses os herdam e os usam; nas demais classes os atributos são privados e os métodos, públicos. O losango preenchido (`*--`) indica composição, o triângulo vazio indica herança e a linha simples indica associação.
 
-**Estrutura de herança:** a classe abstrata `Usuario` concentra os atributos comuns de identificação e autenticação (`id`, `nome`, `email`, `senhaHash`, `telefone`, `status`, `canalPreferido`, `criadoEm`) e os métodos de segurança. As quatro especializações — `Paciente`, `Medico`, `Secretario` e `Administrador` — herdam de `Usuario` e introduzem seus campos e operações próprios (`cpf` para pacientes, par `crm`/`ufCrm` para médicos, `matricula` para secretários e as operações de cadastro do administrador). Os perfis de acesso são mutuamente exclusivos. O atributo `canalPreferido` indica a via prioritária de contato e resposta; as notificações automáticas, porém, são enviadas pelos dois canais.
+**Estrutura de herança:** a classe abstrata `Usuario` concentra os atributos comuns de identificação e autenticação (`id`, `nome`, `email`, `senhaHash`, `telefone`, `status`, `criadoEm`) e os métodos de segurança. As quatro especializações — `Paciente`, `Medico`, `Secretario` e `Administrador` — herdam de `Usuario` e introduzem seus campos e operações próprios (`cpf` para pacientes, par `crm`/`ufCrm` para médicos, `matricula` para secretários e as operações de cadastro do administrador). Os perfis de acesso são mutuamente exclusivos.
 
 **Composições (o todo governa o ciclo de vida das partes):**
 
@@ -671,11 +691,11 @@ end note
 **Associações:**
 
 - **Medico – Especialidade (0..\*:1..\*):** um médico atende uma ou mais especialidades, e uma especialidade pode ter vários médicos.
-- **Horario – Consulta (1:0..\*):** ao longo do tempo, um mesmo horário acumula várias consultas (por exemplo, uma cancelada e outra que o ocupou depois), mas **no máximo uma ativa** (RN-16). A multiplicidade `1:0..1` seria incorreta, porque cancelar e remarcar mantêm a consulta antiga como histórico.
+- **Horario – Consulta (1:0..\*):** ao longo do tempo, um mesmo horário acumula várias consultas (por exemplo, uma cancelada e outra que o ocupou depois), mas **no máximo uma ativa**. A multiplicidade `1:0..1` seria incorreta, porque cancelar e remarcar mantêm a consulta antiga como histórico.
 - **Paciente – Consulta e Medico – Consulta (1:0..\*):** o paciente titular e o médico responsável por cada consulta.
 - **Especialidade – Consulta (1:0..\*):** a consulta guarda a especialidade escolhida no agendamento, já que um médico atende várias.
 - **Consulta – Consulta (0..1:0..1, `remarcadaDe`):** associação reflexiva que liga a consulta remarcada à nova consulta.
-- **Consulta – Usuario (0..\*:0..1, `confirmadaPor` e `canceladaPor`):** registra quem confirmou e quem cancelou. Junto com `confirmadaEm`, `canceladaEm` e `motivoCancelamento` (obrigatório ao cancelar ou remarcar), forma o histórico exigido pela RN-19 e pela RN-24.
+- **Consulta – Usuario (0..\*:0..1, `confirmadaPor` e `canceladaPor`):** registra quem confirmou e quem cancelou. Junto com `confirmadaEm`, `canceladaEm` e `motivoCancelamento` (obrigatório ao cancelar ou remarcar), forma o histórico de quem fez cada alteração e por quê.
 - **Usuario – Auditoria (1:0..\*):** associação simples, pois o registro de auditoria deve sobreviver ao usuário.
 
 **Enumerações tipadas:**
@@ -696,15 +716,15 @@ end note
 
 A modelagem desenvolvida mostra como a UML organiza e comunica a estrutura e o comportamento de um sistema antes da implementação, conectando as regras de negócio aos modelos de software.
 
-O **diagrama de atividades** (DA-01) descreve o processo de agendamento de ponta a ponta. Com raias para o paciente, o sistema e o Sistema de Notificação, ele cobre o fluxo principal e todos os fluxos alternativos e de exceção (sem vagas, horário ocupado, horário fora da janela, sessão expirada, falha de gravação e falha de notificação) e usa *fork/join* para o envio paralelo da notificação.
+O **diagrama de atividades** (DA-01) descreve o processo de agendamento de ponta a ponta. Com raias para o paciente, o sistema e o Sistema de Notificação, ele cobre o fluxo principal e todos os fluxos alternativos e de exceção (sem vagas, horário ocupado, horário fora da janela, sessão expirada, falha de gravação e falha de notificação) e usa *fork/join* em dois níveis: o comprovante segue em paralelo ao envio das notificações e, dentro delas, o e-mail e o WhatsApp são enviados em paralelo, cada um com suas tentativas.
 
-O **diagrama de sequência** (DS-01) mostra, no mesmo cenário, a troca de mensagens ao longo do tempo. Seus destaques são a reserva atômica do horário, o rollback em caso de falha, a criação da consulta e o envio assíncrono das notificações com até 3 tentativas.
+O **diagrama de sequência** (DS-01) mostra, no mesmo cenário, a troca de mensagens ao longo do tempo. Seus destaques são a reserva atômica do horário, o rollback em caso de falha, a criação da consulta e o envio assíncrono e paralelo por e-mail e WhatsApp, com até 3 tentativas em cada canal.
 
 O **diagrama de classes** estrutura a visão estática do domínio com 11 classes e 9 enumerações, relacionamentos de herança, composição e associação com multiplicidades, e visibilidade nos membros.
 
 O trabalho passou por uma revisão de consistência entre os artefatos (seção 6). Dessa revisão resultaram decisões que tornaram o modelo mais fiel às regras de negócio, como a multiplicidade entre `Horario` e `Consulta`, o registro de quem confirmou e quem cancelou, a reserva atômica do horário e a separação entre o comprovante e o envio da notificação.
 
-**Limitações e próximos passos:** a remarcação, a confirmação pelo secretário e o cancelamento estão descritos em texto e na especificação, mas não têm diagrama próprio, porque o DA-01 e o DS-01 já cobrem o que foi pedido. Se houver evolução do trabalho, esses cenários são os candidatos naturais a novos diagramas (por exemplo, o cancelamento com bloqueio da janela de 2 horas).
+**Limitações e próximos passos:** a remarcação, a confirmação pelo secretário e o cancelamento estão descritos em texto (seções 1.4 e 1.5), mas não têm diagrama próprio, porque o DA-01 e o DS-01 já cobrem o que foi pedido. Se houver evolução do trabalho, esses cenários são os candidatos naturais a novos diagramas (por exemplo, o cancelamento com bloqueio da janela de 2 horas).
 
 ---
 
@@ -719,12 +739,12 @@ O trabalho passou por uma revisão de consistência entre os artefatos (seção 
 | DM-03 | A interface é abstraída em um único participante de controle (`Sistema`) no diagrama de sequência. | Mantém o foco nas transações do domínio, sem acoplar a frameworks de front-end. |
 | DM-04 | Quinto ator: **Administrador**. | Alguém precisa cadastrar médicos, secretários e especialidades. O professor permite atores adicionais. |
 | DM-05 | O **motivo do cancelamento e da remarcação é obrigatório**. | Gera mais dados e um histórico de motivos para a clínica (`motivoCancelamento`, também usado na remarcação). |
-| DM-06 | Canais **EMAIL e WHATSAPP**, usados em paralelo, com **uma `Notificacao` por canal**. | São os canais mais usados; um registro por canal permite retry e status de entrega independentes. `canalPreferido` indica a via prioritária de contato. A variante "canal preferido, com o outro de reserva" e a manutenção de `canalPreferido` ainda estão em análise (seção 6.5). |
+| DM-06 | Canais **EMAIL e WHATSAPP**, usados em paralelo, com **uma `Notificacao` por canal**. | São os canais mais usados; um registro por canal permite retry e status de entrega independentes. Decisão da equipe: envio simultâneo pelos dois canais, sem canal de reserva; o atributo `canalPreferido` foi removido, pois não teria função nesse modelo. |
 | DM-07 | A **confirmação é opcional**. | Evita que consultas fiquem travadas se ninguém confirmar. |
 | DM-08 | A **remarcação é sempre com o mesmo médico** (cancelar a original e criar a nova, com vínculo). | Preserva o histórico; trocar de médico é cancelar e agendar de novo. |
 | DM-09 | `Horario` 1 para 0..\* `Consulta`, com no máximo 1 ativa. | O histórico de cancelamentos e remarcações mantém consultas antigas ligadas ao mesmo horário. |
 | DM-10 | **Composição** em Medico–Agenda, Agenda–Horario e Consulta–Notificacao; `Auditoria` fica como associação simples. | Nas composições o todo governa o ciclo de vida das partes; a auditoria deve sobreviver ao usuário. |
-| DM-11 | Apenas **DA-01 e DS-01** são entregues. | Eles já contêm os fluxos alternativos e de exceção pedidos; cancelamento e confirmação ficam documentados em texto e na especificação. |
+| DM-11 | Apenas **DA-01 e DS-01** são entregues. | Eles já contêm os fluxos alternativos e de exceção pedidos; cancelamento e confirmação ficam documentados em texto (seções 1.4 e 1.5). |
 | DM-12 | A reserva do horário é **uma única operação atômica** (`ocupar()`, que lança exceção se o slot foi tomado). | Uma verificação seguida de uma ocupação em duas chamadas não seria atômica. |
 | DM-13 | A consulta guarda a **especialidade escolhida** por associação própria. | Um médico atende várias especialidades; sem isso, não se saberia sob qual delas a consulta foi marcada. |
 | DM-14 | Atributos de `Usuario` com visibilidade `#`. | As subclasses herdam e usam esses atributos. |
@@ -742,15 +762,15 @@ O trabalho passou por uma revisão de consistência entre os artefatos (seção 
 | 15 `agendar(...)` | Paciente (via Sistema) | `Paciente.agendar(medico, especialidade, horario)` |
 | 23 `<<create>>` | Consulta | criação de `Consulta` (status inicial `AGENDADA`) |
 | 28 `registrar(CONSULTA_CRIADA)` | Auditoria | `Auditoria.registrar(evento)` |
-| 29 `<<create>>` | Notificacao | criação de `Notificacao` (`PENDENTE`) |
-| 33 `registrarEnvio()` | Notificacao | `Notificacao.registrarEnvio()` |
-| 36 `registrarFalha()` | Notificacao | `Notificacao.registrarFalha()` |
+| 29 e 30 `<<create>>` | Notificacao (EMAIL e WHATSAPP) | criação de uma `Notificacao` por canal (`PENDENTE`) |
+| 34 e 40 `registrarEnvio()` | Notificacao | `Notificacao.registrarEnvio()` |
+| 37 e 43 `registrarFalha()` | Notificacao | `Notificacao.registrarFalha()` |
 
-As demais mensagens são operações do controlador `Sistema` (decisão DM-03). A exceção `HorarioIndisponivelException` está definida na especificação (seção 5.6).
+As demais mensagens são operações do controlador `Sistema` (decisão DM-03). A exceção `HorarioIndisponivelException` é lançada por `Horario.ocupar()` quando o slot já foi tomado; ela pertence ao controle de erros do `Sistema` e não é uma classe do diagrama.
 
-**Atividades versus Sequência.** Cada fluxo alternativo e de exceção do DA-01 tem a mensagem correspondente no DS-01 (tabela da seção 3.1): A1, A2, A3, E1, E2 e E3. O *fork/join* do DA-01 corresponde ao bloco `par` do DS-01.
+**Atividades versus Sequência.** Cada fluxo alternativo e de exceção do DA-01 tem a mensagem correspondente no DS-01 (tabela da seção 3.1): A1, A2, A3, E1, E2 e E3. Os *forks/joins* do DA-01 (comprovante × notificações e e-mail × WhatsApp) correspondem ao bloco `par` do DS-01.
 
-**Classes versus Atividades.** A multiplicidade `Horario 1:0..*  Consulta` com "no máximo 1 ativa" sustenta o laço de "horário ocupado" do DA-01: a reserva é recusada se já existe consulta ativa no horário (RN-16). As ações "marcar horário como `OCUPADO`" e "rollback" usam `Horario.ocupar()` e `Horario.liberar()`.
+**Classes versus Atividades.** A multiplicidade `Horario 1:0..*  Consulta` com "no máximo 1 ativa" sustenta o laço de "horário ocupado" do DA-01: a reserva é recusada se já existe consulta ativa no horário. As ações "marcar horário como `OCUPADO`" e "rollback" usam `Horario.ocupar()` e `Horario.liberar()`.
 
 **Máquina de estados.** O ciclo de vida da seção 1.5 é o único usado nos três artefatos: o agendamento cria a consulta como `AGENDADA` (DA-01 e DS-01), e os demais estados são os do enumerador `StatusConsulta`.
 
@@ -760,11 +780,11 @@ As demais mensagens são operações do controlador `Sistema` (decisão DM-03). 
 |---|---|---|
 | Sintaxe dos diagramas | Verificado | Os 3 blocos PlantUML foram validados com o PlantUML 1.2024.3 (opção `-syntax`) |
 | Desenho dos diagramas | Verificado | Os 3 diagramas foram renderizados em SVG (`assets/`) e inspecionados |
-| Imagens atualizadas | Gerado | `node scripts/renderizar-diagramas.js` gera os SVGs a partir dos blocos PlantUML deste arquivo |
+| Imagens atualizadas | Gerado | As imagens de `assets/` foram geradas a partir dos blocos PlantUML deste arquivo |
 | Conformidade de métodos | Consistente | Tabela da seção 6.2 |
 | Unicidade de horário | Consistente | `ocupar()` atômico no DS-01 e laço "Slot ainda disponível?" no DA-01; multiplicidade `1:0..*` com no máximo 1 ativa |
 | Desacoplamento da mensageria | Consistente | *Fork/join* no DA-01 e bloco `par` no DS-01 |
-| Coerência de papéis | Consistente | Atores e permissões da seção 1.3 conferem com a especificação (matriz perfil × ação) |
+| Coerência de papéis | Consistente | Atores e permissões da seção 1.3 conferem com o ciclo de vida da seção 1.5 |
 
 **Atendimento às instruções do professor:**
 
@@ -778,56 +798,6 @@ As demais mensagens são operações do controlador `Sistema` (decisão DM-03). 
 | Classes | Classes principais, atributos e métodos | Seção 4: 11 classes com atributos e métodos |
 | Classes | Associação, herança, composição e multiplicidade | Seção 4: as quatro relações, com multiplicidades nas extremidades |
 | Classes | Visibilidade (`+`, `-`, `#`) | Seção 4: `#` em `Usuario`, `-` nos demais atributos, `+` nos métodos |
-
-### 6.4 Rastreabilidade
-
-| Artefato | Requisitos e regras (`especificacao-requisitos.md`) |
-|---|---|
-| DA-01 e DS-01 | RF-02, RF-06 a RF-10, RF-20, RF-21; RN-09 a RN-13, RN-16, RN-20, RN-25; fluxo F-01 |
-| Diagrama de classes | Todos os RF; em especial RN-15 e RN-16 (consulta e horário), RN-19 e RN-24 (autoria), RN-25 (notificação por canal) e RNF-22 e RNF-23 (auditoria) |
-
-### 6.5 Decisões em aberto (remover esta seção antes da entrega)
-
-Pontos que a equipe ainda precisa decidir. Enquanto isso, o trabalho adota a **opção A** em D-01 e mantém `canalPreferido` como atributo **opcional** (`[0..1]`, com uma nota de decisão pendente no diagrama de classes).
-
-#### D-01 — Como enviar pelos dois canais?
-
-| | **A — E-mail e WhatsApp em paralelo** (adotada hoje) | **B — Canal preferido, com o outro de reserva** |
-|---|---|---|
-| Como funciona | Cada evento gera uma `Notificacao` por canal, enviadas ao mesmo tempo | Envia pelo `canalPreferido` do destinatário; se falhar após as tentativas, tenta o outro canal |
-| Vantagens | O paciente é alcançado mais rápido; paralelismo real (justifica o fork/join); não depende da preferência; retry independente por canal | Menos mensagens (sem duplicidade); respeita a preferência; `canalPreferido` passa a ter função clara |
-| Desvantagens | A mensagem chega duplicada, o que pode incomodar; dobra o volume de envios; `canalPreferido` perde a função | Menos paralelismo; é preciso definir o que é "falha" para trocar de canal; o médico também precisa de `canalPreferido` |
-
-**O que muda se a equipe escolher B:**
-
-| Onde | Mudança |
-|---|---|
-| DA-01 | No ramo do Sistema de Notificação: "Enviar pelo canal preferido" → "Entrega confirmada?" não → "Tentar o outro canal". O registro passa a ser um por evento e destinatário |
-| DS-01 | A nota "um registro por canal" vira "um registro por evento"; `enviar(destinatário, canalPreferido, mensagem)` e, na falha, `enviar(destinatário, outroCanal, mensagem)` |
-| Classes | `Notificacao.canal` passa a ser o canal efetivamente usado; `canalPreferido` deixa de ser opcional |
-| Especificação | RN-20 (uma notificação por destinatário), RN-25 (tentativas e troca de canal), F-06 (A1 volta a ser reserva para o outro canal), P-23, seções 8.1 e 8.9 |
-| Este trabalho | Seções 1.2, 1.3 (item 5), 1.4 (módulo de notificações), 1.6 e DM-06 |
-
-#### D-02 — Manter o atributo `canalPreferido`?
-
-| Se D-01 for | Opções |
-|---|---|
-| **A** | Manter como "via de contato" (opcional), ou remover. Remover muda só a classe `Usuario`, a seção 8.1 da especificação, o texto da seção 4.3 e a DM-06 |
-| **B** | Manter e tornar obrigatório (é ele que define o canal principal) |
-
-**Sugestão:** a opção A é a mais simples de explicar e já está coerente nos três artefatos. A opção B só vale a pena se a equipe quiser evitar mensagens duplicadas.
-
----
-
-## 7. Documentos Complementares e Como Visualizar
-
-- **`especificacao-requisitos.md`:** especificação completa (atores, RF, RNF, regras de negócio, fluxos, modelo conceitual, premissas).
-- **`README.md`:** índice do repositório, com os diagramas em imagem (SVG) para visualização direta no GitHub.
-- **`assets/`:** imagens SVG dos diagramas, geradas a partir deste arquivo.
-- **`scripts/renderizar-diagramas.js`:** regenera as imagens.
-- **`instrucao-inicial.md`:** descrição do tema e instruções do professor.
-
-O código-fonte dos diagramas está em PlantUML, dentro de cada bloco recolhível, e as imagens de `assets/` são geradas a partir dele (o GitHub e a prévia de Markdown do VS Code não desenham PlantUML, mas mostram a imagem). Depois de editar um diagrama, rode `node scripts/renderizar-diagramas.js` para atualizar o SVG; o script precisa do Node e do `plantuml.jar` da extensão PlantUML do VS Code (ou da variável de ambiente `PLANTUML_JAR`). Para ver um diagrama enquanto edita, clique dentro do bloco, entre `@startuml` e `@enduml`, e pressione `Alt+D` com a extensão PlantUML.
 
 ---
 
