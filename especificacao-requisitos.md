@@ -3,7 +3,7 @@
 > **Documento:** APS 1 — Modelagem de Software
 > **Fonte:** descrição inicial (`instrucao-inicial.md`) + instruções do professor
 > **Finalidade:** servir de base para a modelagem UML (Diagramas de Atividades, Sequência e Classes)
-> **Versão:** 1.3 (versão final consolidada; alinhada ao `trabalho-modelagem-uml-final.md`)
+> **Versão:** 1.3 (versão final consolidada; alinhada ao `trabalho-modelagem-uml-kayque.md`)
 
 ---
 
@@ -780,7 +780,7 @@ Todas as hipóteses adotadas durante a modelagem ficam explícitas abaixo:
 | **P-20** | A **confirmação é opcional**: o médico pode iniciar consultas `AGENDADA` ou `CONFIRMADA` (RN-28). | Evita que consultas fiquem travadas se ninguém confirmar. |
 | **P-21** | O lembrete de 24 h (RN-26) e a transição automática para `NAO_REALIZADA` (RN-17) são executados por um **agendador interno** (Sistema), não por um ator humano. | Alguém precisa disparar eventos temporais; é infraestrutura, não ator de negócio. |
 | **P-22** | **Composição** é usada onde o ciclo de vida do todo governa as partes: `Medico`–`Agenda`, `Agenda`–`Horario` e `Consulta`–`Notificacao`. `Auditoria` e `Horario`–`Consulta` ficam como associação simples. | Auditoria deve sobreviver ao usuário, e a consulta é histórico que sobrevive à liberação do horário. |
-| **P-23** | As notificações são enviadas por **EMAIL e WHATSAPP**, em paralelo, com **um registro `Notificacao` por canal**; `canalPreferido` indica a via prioritária de contato. | São os canais mais usados; um registro por canal permite retry e status de entrega independentes. Decisão da equipe; a variante "canal preferido, com o outro de reserva" e a manutenção de `canalPreferido` seguem em análise (`trabalho-modelagem-uml-final.md`, seção 6.5). |
+| **P-23** | As notificações são enviadas por **EMAIL e WHATSAPP**, em paralelo, com **um registro `Notificacao` por canal**; `canalPreferido` indica a via prioritária de contato. | São os canais mais usados; um registro por canal permite retry e status de entrega independentes. Decisão da equipe; a variante "canal preferido, com o outro de reserva" e a manutenção de `canalPreferido` seguem em análise (`trabalho-modelagem-uml-kayque.md`, seção 6.5). |
 | **P-24** | O **motivo do cancelamento e da remarcação é obrigatório**. | Gera mais dados e um histórico de motivos (`motivoCancelamento`, também usado na remarcação). Decisão da equipe. |
 | **P-25** | Os diagramas entregues são o **DA-01** e o **DS-01**. | Eles já contêm os fluxos alternativos e de exceção de F-01; os demais cenários ficam documentados em texto e podem virar diagramas em uma evolução. Decisão da equipe. |
 

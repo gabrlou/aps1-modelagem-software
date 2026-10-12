@@ -2,9 +2,9 @@
 
 Modelagem UML de um sistema de agendamento de consultas médicas (APS 1).
 
-- **Trabalho final:** [trabalho-modelagem-uml-final.md](trabalho-modelagem-uml-final.md), com capa, descrição, diagramas, considerações finais e verificação de consistência.
+- **Trabalho de modelagem (duas versões):** [versão do Kayque](trabalho-modelagem-uml-kayque.md), com capa, descrição, diagramas, considerações finais e verificação de consistência, e [versão do Gabriel](trabalho-modelagem-uml-gabriel.md).
 - **Especificação de requisitos:** [especificacao-requisitos.md](especificacao-requisitos.md).
-- Os diagramas abaixo são imagens SVG (pasta [assets](assets)) geradas a partir do código PlantUML do trabalho final, que é a fonte única. Para atualizá-las depois de editar um diagrama: `node scripts/renderizar-diagramas.js`.
+- Os diagramas abaixo são imagens SVG (pasta [assets](assets)) geradas a partir do código PlantUML da versão do Kayque, que é a fonte desses arquivos. Para atualizá-las depois de editar um diagrama: `node scripts/renderizar-diagramas.js`.
 
 # Sumário
 
