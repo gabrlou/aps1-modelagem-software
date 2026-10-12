@@ -130,3 +130,27 @@ Entregáveis:
 - Diagrama(s) de Classes
 - Considerações finais do grupo
 ```
+
+Instruções do professor para a construção dos diagramas:
+
+```markdown
+Instruções para a Construção dos Diagramas
+
+1. Diagrama de Atividades
+
+Use nó inicial, ações, decisões (diamantes), fork/join (se houver paralelismo) e nó final.
+Represente pelo menos um fluxo alternativo (ex.: pagamento recusado, livro indisponível).
+Pode ser dividido em raias (swimlanes) por ator, se ajudar na clareza.
+
+2. Diagrama de Sequência
+
+Escolha um cenário principal (ex.: “Realizar Pedido”).
+Mostre as mensagens trocadas em ordem temporal.
+Inclua mensagens de retorno quando fizer sentido.
+
+3. Diagrama de Classes (macro)
+
+Foque nas classes principais (não precisa detalhar tudo).
+Inclua atributos, métodos relevantes e relacionamentos (associação, herança, composição, multiplicidade).
+Indique visibilidade (+, -, #) quando possível.
+```
