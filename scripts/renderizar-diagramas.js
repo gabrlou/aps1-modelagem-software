@@ -1,4 +1,4 @@
-// Gera os SVGs dos diagramas PlantUML de trabalho-modelagem-uml-kayque.md em assets/.
+// Gera os SVGs dos diagramas PlantUML de trabalho-modelagem-uml.md em assets/.
 // Uso:  node scripts/renderizar-diagramas.js
 // Precisa de Java e do plantuml.jar (variável PLANTUML_JAR, ou o jar da extensão
 // "PlantUML" do VS Code). Os diagramas de classes precisam do Graphviz (dot).
@@ -8,7 +8,9 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 
 const raiz = path.join(__dirname, "..");
-const origem = path.join(raiz, "trabalho-modelagem-uml-kayque.md");
+const origem = fs.existsSync(path.join(raiz, "trabalho-modelagem-uml.md"))
+  ? path.join(raiz, "trabalho-modelagem-uml.md")
+  : path.join(raiz, "trabalho-modelagem-uml-kayque.md");
 const saida = path.join(raiz, "assets");
 
 function acharJar() {

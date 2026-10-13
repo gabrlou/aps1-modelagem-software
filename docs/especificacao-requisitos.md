@@ -3,7 +3,7 @@
 > **Documento:** APS 1 — Modelagem de Software
 > **Fonte:** descrição inicial (`instrucao-inicial.md`) + instruções do professor
 > **Finalidade:** servir de base para a modelagem UML (Diagramas de Atividades, Sequência e Classes)
-> **Versão:** 1.4 (versão final consolidada; alinhada ao `trabalho-modelagem-uml-kayque.md`)
+> **Versão:** 1.4 (versão final consolidada; alinhada ao `trabalho-modelagem-uml.md`)
 
 ---
 
