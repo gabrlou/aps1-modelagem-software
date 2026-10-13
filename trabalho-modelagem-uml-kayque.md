@@ -103,7 +103,7 @@ Cada evento gera uma notificação por destinatário e por canal (e-mail e Whats
 
 ## 2. Diagramas de Atividades
 
-Fizemos um único diagrama de atividades, o **DA-01**, com o fluxo principal de agendamento e todos os caminhos alternativos e de erro. Como ele já cobre o que foi pedido, não criamos diagramas separados para cancelar, remarcar e confirmar consulta; esses processos estão explicados nas seções 1.4 e 1.5 (decisão DM-11).
+Fizemos um único diagrama de atividades, o **DA-01**, com o fluxo principal de agendamento e todos os caminhos alternativos e de erro. Como ele já cobre o que foi pedido, não criamos diagramas separados para cancelar, remarcar e confirmar consulta; esses processos estão explicados nas seções 1.4 e 1.5.
 
 ### 2.1 DA-01 — Agendamento de Consulta
 
@@ -417,7 +417,7 @@ deactivate S
 - **Criação de objetos em tempo de execução (mensagens 23, 29 e 30):** `Consulta` e os dois objetos `Notificacao` — um por canal — só existem a partir do momento em que são criados no fluxo (setas `<<create>>`). Isso torna explícito que a criação é parte do processo de agendamento, e não algo pré-existente. A mensagem 15, `agendar(...)`, corresponde à operação `Paciente.agendar(medico, especialidade, horario)` do diagrama de classes.
 - **Paralelismo no envio (mensagem 31 em diante):** assim que a consulta é gravada com sucesso, o bloco `par` divide o fluxo em três ramos simultâneos: entrega do comprovante ao paciente, envio por e-mail e envio por WhatsApp. Esse comportamento espelha os *forks* do DA-01. As setas com ponta aberta (`->>`) indicam que as chamadas ao Sistema de Notificação são assíncronas — o sistema não espera a confirmação de entrega para liberar o paciente.
 - **Retentativas independentes por canal (mensagens 32–43):** cada canal possui seu próprio laço de até 3 tentativas com *backoff* entre elas. Quando uma entrega é confirmada, o bloco `break` encerra o laço daquele canal. Após 3 falhas consecutivas, o status do objeto `Notificacao` passa para `FALHOU` — mas isso afeta apenas o canal em questão; o outro canal continua normalmente e o status da consulta permanece `AGENDADA`.
-- **Papel do participante `Sistema`:** representa a camada de aplicação, responsável por orquestrar todas as chamadas. As mensagens que chegam a ele (`iniciarAgendamento`, `selecionarMedico`, `selecionarHorario` e outras) são operações do controlador de aplicação, não métodos das classes de domínio — separação intencional conforme a decisão de modelagem DM-03.
+- **Papel do participante `Sistema`:** representa a camada de aplicação, que orquestra todo o fluxo. As mensagens que chegam a ele (`iniciarAgendamento`, `selecionarMedico`, `selecionarHorario` e outras) são operações do controlador da aplicação, e não métodos diretos das classes de domínio. Essa separação é intencional: ela mantém o diagrama focado na lógica de negócio e na interação entre os objetos, sem misturar detalhes de telas ou de interface com as classes do sistema.
 
 A tabela abaixo mapeia cada fluxo alternativo (A) e de exceção (E) às mensagens do diagrama onde ele é tratado:
 
@@ -720,83 +720,126 @@ O **diagrama de sequência** (DS-01) mostra, no mesmo cenário, a troca de mensa
 
 O **diagrama de classes** estrutura a visão estática do domínio com 11 classes e 9 enumerações, relacionamentos de herança, composição e associação com multiplicidades, e visibilidade nos membros.
 
-O trabalho passou por uma revisão de consistência entre os artefatos (seção 6). Dessa revisão resultaram decisões que tornaram o modelo mais fiel às regras de negócio, como a multiplicidade entre `Horario` e `Consulta`, o registro de quem confirmou e quem cancelou, a reserva atômica do horário e a separação entre o comprovante e o envio da notificação.
+O trabalho passou por uma criteriosa revisão de consistência entre os artefatos. Dessa revisão resultaram decisões que tornaram o modelo mais fiel às regras de negócio, como a multiplicidade entre `Horario` e `Consulta`, o 
+ de quem confirmou e quem cancelou, a reserva atômica do horário e a separação entre o comprovante e o envio da notificação.
 
 **Limitações e próximos passos:** a remarcação, a confirmação pelo secretário e o cancelamento estão descritos em texto (seções 1.4 e 1.5), mas não têm diagrama próprio, porque o DA-01 e o DS-01 já cobrem o que foi pedido. Se houver evolução do trabalho, esses cenários são os candidatos naturais a novos diagramas (por exemplo, o cancelamento com bloqueio da janela de 2 horas).
 
 ---
 
-## 6. Verificação de Consistência e Decisões de Modelagem
+## Apêndice A — Especificação de Requisitos e Regras de Negócio
 
-### 6.1 Decisões de Modelagem
-
-| # | Decisão | Justificativa |
-|---|---|---|
-| DM-01 | Enumeração `StatusEntrega` (`PENDENTE`, `ENVIADA`, `FALHOU`). | Formaliza o ciclo de vida da mensageria assíncrona e a rastreabilidade de cada envio. |
-| DM-02 | Enumeração `StatusEspecialidade` (`ATIVA`, `INATIVA`), separada de `StatusUsuario`. | Evita que uma especialidade assuma estados impróprios, como `BLOQUEADO`. |
-| DM-03 | A interface é abstraída em um único participante de controle (`Sistema`) no diagrama de sequência. | Mantém o foco nas transações do domínio, sem acoplar a frameworks de front-end. |
-| DM-04 | Quinto ator: **Administrador**. | Alguém precisa cadastrar médicos, secretários e especialidades. O professor permite atores adicionais. |
-| DM-05 | O **motivo do cancelamento e da remarcação é obrigatório**. | Gera mais dados e um histórico de motivos para a clínica (`motivoCancelamento`, também usado na remarcação). |
-| DM-06 | Canais **EMAIL e WHATSAPP**, usados em paralelo, com **uma `Notificacao` por canal**. | São os canais mais usados; um registro por canal permite retry e status de entrega independentes. Decisão da equipe: envio simultâneo pelos dois canais, sem canal de reserva; o atributo `canalPreferido` foi removido, pois não teria função nesse modelo. |
-| DM-07 | A **confirmação é opcional**. | Evita que consultas fiquem travadas se ninguém confirmar. |
-| DM-08 | A **remarcação é sempre com o mesmo médico** (cancelar a original e criar a nova, com vínculo). | Preserva o histórico; trocar de médico é cancelar e agendar de novo. |
-| DM-09 | `Horario` 1 para 0..\* `Consulta`, com no máximo 1 ativa. | O histórico de cancelamentos e remarcações mantém consultas antigas ligadas ao mesmo horário. |
-| DM-10 | **Composição** em Medico–Agenda, Agenda–Horario e Consulta–Notificacao; `Auditoria` fica como associação simples. | Nas composições o todo governa o ciclo de vida das partes; a auditoria deve sobreviver ao usuário. |
-| DM-11 | Apenas **DA-01 e DS-01** são entregues. | Eles já contêm os fluxos alternativos e de exceção pedidos; cancelamento e confirmação ficam documentados em texto (seções 1.4 e 1.5). |
-| DM-12 | A reserva do horário é **uma única operação atômica** (`ocupar()`, que lança exceção se o slot foi tomado). | Uma verificação seguida de uma ocupação em duas chamadas não seria atômica. |
-| DM-13 | A consulta guarda a **especialidade escolhida** por associação própria. | Um médico atende várias especialidades; sem isso, não se saberia sob qual delas a consulta foi marcada. |
-| DM-14 | Atributos de `Usuario` com visibilidade `#`. | As subclasses herdam e usam esses atributos. |
-
-### 6.2 Análise de Consistência entre Modelos
-
-**Classes versus Sequência.** Todas as mensagens do DS-01 enviadas a objetos de domínio correspondem a operações declaradas nas classes:
-
-| Mensagem (nº) | Objeto | Operação no diagrama de classes |
-|---|---|---|
-| 6 e 19 `getHorariosDisponiveis(intervalo)` | Agenda | `Agenda.getHorariosDisponiveis(intervalo)` |
-| 7 `estaDisponivel()` | Horario | `Horario.estaDisponivel()` |
-| 17 `ocupar()` | Horario | `Horario.ocupar()` |
-| 25 `liberar()` | Horario | `Horario.liberar()` |
-| 15 `agendar(...)` | Paciente (via Sistema) | `Paciente.agendar(medico, especialidade, horario)` |
-| 23 `<<create>>` | Consulta | criação de `Consulta` (status inicial `AGENDADA`) |
-| 28 `registrar(CONSULTA_CRIADA)` | Auditoria | `Auditoria.registrar(evento)` |
-| 29 e 30 `<<create>>` | Notificacao (EMAIL e WHATSAPP) | criação de uma `Notificacao` por canal (`PENDENTE`) |
-| 34 e 40 `registrarEnvio()` | Notificacao | `Notificacao.registrarEnvio()` |
-| 37 e 43 `registrarFalha()` | Notificacao | `Notificacao.registrarFalha()` |
-
-As demais mensagens são operações do controlador `Sistema` (decisão DM-03). A exceção `HorarioIndisponivelException` é lançada por `Horario.ocupar()` quando o slot já foi tomado; ela pertence ao controle de erros do `Sistema` e não é uma classe do diagrama.
-
-**Atividades versus Sequência.** Cada fluxo alternativo e de exceção do DA-01 tem a mensagem correspondente no DS-01 (tabela da seção 3.1): A1, A2, A3, E1, E2 e E3. Os *forks/joins* do DA-01 (comprovante × notificações e e-mail × WhatsApp) correspondem ao bloco `par` do DS-01.
-
-**Classes versus Atividades.** A multiplicidade `Horario 1:0..*  Consulta` com "no máximo 1 ativa" sustenta o laço de "horário ocupado" do DA-01: a reserva é recusada se já existe consulta ativa no horário. As ações "marcar horário como `OCUPADO`" e "rollback" usam `Horario.ocupar()` e `Horario.liberar()`.
-
-**Máquina de estados.** O ciclo de vida da seção 1.5 é o único usado nos três artefatos: o agendamento cria a consulta como `AGENDADA` (DA-01 e DS-01), e os demais estados são os do enumerador `StatusConsulta`.
-
-### 6.3 Quadro de Validação dos Artefatos
-
-| Critério | Resultado | Evidência |
-|---|---|---|
-| Sintaxe dos diagramas | Verificado | Os 3 blocos PlantUML foram validados com o PlantUML 1.2024.3 (opção `-syntax`) |
-| Desenho dos diagramas | Verificado | Os 3 diagramas foram renderizados em SVG (`assets/`) e inspecionados |
-| Imagens atualizadas | Gerado | As imagens de `assets/` foram geradas a partir dos blocos PlantUML deste arquivo |
-| Conformidade de métodos | Consistente | Tabela da seção 6.2 |
-| Unicidade de horário | Consistente | `ocupar()` atômico no DS-01 e laço "Slot ainda disponível?" no DA-01; multiplicidade `1:0..*` com no máximo 1 ativa |
-| Desacoplamento da mensageria | Consistente | *Fork/join* no DA-01 e bloco `par` no DS-01 |
-| Coerência de papéis | Consistente | Atores e permissões da seção 1.3 conferem com o ciclo de vida da seção 1.5 |
-
-**Atendimento às instruções do professor:**
-
-| Diagrama | Instrução | Onde foi atendida |
-|---|---|---|
-| Atividades | Nó inicial, ações, decisões e nó final | DA-01: início, ações, losangos de decisão e nós finais |
-| Atividades | Fork/join, se houver paralelismo | DA-01: comprovante em paralelo ao envio da notificação |
-| Atividades | Pelo menos um fluxo alternativo | DA-01: A1, A2, A3, E1, E2 e E3 |
-| Atividades | Raias por ator | DA-01: Paciente, Sistema e Sistema de Notificação |
-| Sequência | Cenário principal, mensagens em ordem temporal, retornos | DS-01: agendamento, numeração das mensagens e setas de retorno tracejadas |
-| Classes | Classes principais, atributos e métodos | Seção 4: 11 classes com atributos e métodos |
-| Classes | Associação, herança, composição e multiplicidade | Seção 4: as quatro relações, com multiplicidades nas extremidades |
-| Classes | Visibilidade (`+`, `-`, `#`) | Seção 4: `#` em `Usuario`, `-` nos demais atributos, `+` nos métodos |
+As decisões de modelagem apresentadas neste trabalho foram fundamentadas em um levantamento prévio de requisitos funcionais e regras de negócio, consolidados abaixo para fins de consulta e rastreabilidade.
 
 ---
 
-*Trabalho acadêmico de modelagem de software contendo a descrição da aplicação, o diagrama de atividades, o diagrama de sequência e o diagrama de classes, com verificação de consistência entre os artefatos.*
+### A.1 Requisitos Funcionais (RF)
+
+#### Módulo de Cadastro e Autenticação
+
+| ID | Requisito | Descrição | Regras relacionadas |
+|---|---|---|---|
+| RF-01 | Cadastrar paciente | O sistema deve permitir o cadastro de paciente com nome, CPF, data de nascimento, e-mail, telefone e senha. | RN-01, RN-02, RN-03 |
+| RF-02 | Autenticar usuário | O sistema deve autenticar paciente, médico, secretário e administrador por e-mail + senha, diferenciando perfis. | RN-04, RN-22 |
+| RF-03 | Recuperar senha | O sistema deve permitir redefinição de senha por link enviado ao e-mail cadastrado. | RN-05 |
+| RF-04 | Gerenciar cadastro de médico e secretário | O **Administrador** deve poder cadastrar médico (nome, CRM, UF, especialidade(s) e contato) e secretário (nome, matrícula e contato). | RN-02, RN-06, RN-07 |
+| RF-05 | Gerenciar especialidades | O **Administrador** deve poder manter o catálogo de especialidades (nome, descrição, status ATIVA/INATIVA). | RN-08 |
+
+#### Módulo de Consulta de Médicos e Especialidades
+
+| ID | Requisito | Descrição | Regras relacionadas |
+|---|---|---|---|
+| RF-06 | Listar especialidades | O sistema deve exibir todas as especialidades ativas para busca. | RN-08 |
+| RF-07 | Listar médicos por especialidade | Dada uma especialidade, o sistema deve listar os médicos ativos que a atendem. | RN-06, RN-09 |
+| RF-08 | Exibir horários disponíveis | Para cada médico, o sistema deve exibir apenas os horários **livres** dentro da sua disponibilidade, considerando o horário atual. | RN-10, RN-11, RN-12 |
+
+#### Módulo de Agendamento
+
+| ID | Requisito | Descrição | Regras relacionadas |
+|---|---|---|---|
+| RF-09 | Agendar consulta | O paciente deve poder agendar consulta selecionando especialidade → médico → data → horário livre, com confirmação final antes do envio. | RN-09, RN-10, RN-12, RN-13, RN-16 |
+| RF-10 | Confirmar agendamento | Após a reserva bem-sucedida, o sistema deve exibir resumo da consulta e disparar notificação de agendamento. | RN-20, RN-25 |
+| RF-11 | Visualizar minhas consultas | O paciente deve poder listar suas consultas futuras e passadas com respectivo status. | RN-17 |
+| RF-12 | Cancelar consulta | O paciente (ou secretário) deve poder cancelar uma consulta futura, informando o motivo (obrigatório), liberando o horário. | RN-18, RN-19 |
+| RF-13 | Remarcar consulta | O paciente titular (ou o secretário) deve poder remarcar uma consulta futura **com o mesmo médico**, informando o motivo (obrigatório) e validando o novo horário como uma nova reserva. | RN-12, RN-15, RN-18, RN-19 |
+| RF-22 | Agir em nome do paciente | O secretário deve poder agendar, remarcar e cancelar consultas em nome de um paciente cadastrado (atendimento presencial/telefônico), com as mesmas validações de RF-09, RF-12 e RF-13. | RN-09, RN-10, RN-12, RN-13, RN-16, RN-18, RN-27 |
+
+#### Módulo de Agenda do Médico
+
+| ID | Requisito | Descrição | Regras relacionadas |
+|---|---|---|---|
+| RF-14 | Definir disponibilidade | O médico deve poder definir dias da semana e faixas horárias de atendimento, com antecedência mínima configurável. | RN-10, RN-11, RN-12, RN-21 |
+| RF-15 | Bloquear horário | O médico deve poder bloquear um horário específico já disponível (sem consulta), tornando-o indisponível. O secretário pode registrar bloqueios operacionais justificados. | RN-14, RN-21 |
+| RF-16 | Visualizar agenda | O médico e o secretário devem poder visualizar a agenda em visão diária/semanal, com status de cada consulta. | RN-17 |
+| RF-17 | Atender e encerrar consulta | O médico deve poder iniciar a consulta, marcá-la como **realizada** ao final do atendimento ou registrar a **ausência** do paciente (`NAO_REALIZADA`). | RN-23, RN-28 |
+
+#### Módulo de Confirmação (Secretário)
+
+| ID | Requisito | Descrição | Regras relacionadas |
+|---|---|---|---|
+| RF-18 | Confirmar consulta | O secretário (ou o médico titular) deve poder confirmar uma consulta com status *agendada*, alterando-a para *confirmada* e registrando quem confirmou e quando. | RN-20, RN-24, RN-28 |
+| RF-19 | Visualizar pendências | O sistema deve listar as consultas pendentes de confirmação, filtráveis por médico, data e status. | RN-24 |
+
+#### Módulo de Notificação
+
+| ID | Requisito | Descrição | Regras relacionadas |
+|---|---|---|---|
+| RF-20 | Notificar eventos | O sistema deve disparar notificações nos eventos: agendada, confirmada, cancelada, remarcada, lembrete pré-consulta. | RN-20, RN-25, RN-26 |
+| RF-21 | Registrar notificações | Cada notificação deve ser persistida com destinatário, evento, canal, data/hora e status de entrega. | RN-25 |
+
+---
+
+### A.2 Regras de Negócio (RN)
+
+#### Identificação e acesso
+
+| ID | Regra |
+|---|---|
+| **RN-01** | O CPF deve ter 11 dígitos, ser válido (módulo 11) e **único** no cadastro de pacientes. |
+| **RN-02** | O e-mail deve ser válido e **único** por usuário no sistema. |
+| **RN-03** | A senha deve ter no mínimo 8 caracteres, contendo ao menos 1 letra e 1 número. |
+| **RN-04** | O sistema autentica por e-mail + senha e deriva o perfil (PACIENTE, MEDICO, SECRETARIO, ADMINISTRADOR) do cadastro. |
+| **RN-05** | Links de redefinição de senha expiram em 30 minutos e são de uso único. |
+| **RN-22** | Após 5 falhas consecutivas de login, a conta é bloqueada por 15 minutos. |
+
+#### Cadastros e catálogo
+
+| ID | Regra |
+|---|---|
+| **RN-06** | Todo médico deve ter **ao menos uma** especialidade ativa para aparecer nas buscas. |
+| **RN-07** | O par (CRM, UF) do médico é **único** no sistema. |
+| **RN-08** | Só são exibidas especialidades com `status = ATIVA`. |
+| **RN-09** | Paciente, médico, secretário e administrador só são exibidos com `status = ATIVO`; cadastro inativo não pode gerar novas consultas. |
+
+#### Disponibilidade e horários
+
+| ID | Regra |
+|---|---|
+| **RN-10** | Um horário só é considerado **disponível** se: pertencer à disponibilidade do médico, estar dentro do expediente configurado, não estiver bloqueado e **não houver consulta ativa** (AGENDADA, CONFIRMADA ou EM_ANDAMENTO) naquele slot. |
+| **RN-11** | Cada consulta ocupa **um slot** de **30 minutos por padrão** (configurável pelo médico em múltiplos de 30), sem sobreposição entre consultas do mesmo médico. |
+| **RN-12** | Só é permitido agendar a partir de `agora + antecedênciaMinima` da agenda do médico (**padrão 30 min**) e com no máximo **90 dias** de antecedência. |
+| **RN-14** | Bloqueios operacionais de horário feitos pelo secretário exigem justificativa e ficam registrados em auditoria. |
+| **RN-21** | Alterações de disponibilidade ou bloqueios que atinjam consultas já existentes **não** as cancelam automaticamente; o sistema deve sinalizar conflito e exigir tratamento manual. |
+
+#### Ciclo de vida da consulta
+
+| ID | Regra |
+|---|---|
+| **RN-13** | Toda consulta nasce com status `AGENDADA` e está sempre associada a **1 paciente, 1 médico, 1 especialidade e 1 slot de horário**. |
+| **RN-15** | A **remarcação** é modelada como: cancelamento da consulta original (status `REMARCADA`, com vínculo para a nova) + criação de nova consulta. A remarcação mantém o **mesmo médico**; trocar de médico exige cancelar e agendar novamente. |
+| **RN-16** | Apenas uma consulta pode ocupar o mesmo (médico, data, horário) com status ativo; consultas canceladas ou remarcadas permanecem como histórico, vinculadas ao mesmo `Horario`. |
+| **RN-17** | Consultas `AGENDADA` ou `CONFIRMADA` cujo slot terminou sem terem sido iniciadas transicionam automaticamente para `NAO_REALIZADA` (executado pelo Sistema/agendador). |
+| **RN-18** | Cancelamento/remarcação só é permitido **até 2 horas antes** do horário da consulta. |
+| **RN-19** | Cancelamentos e remarcações exigem **confirmação explícita** do usuário, registram autor (`canceladaPor`) e data (`canceladaEm`), e exigem **motivo obrigatório** (`motivoCancelamento`). |
+| **RN-23** | Somente o médico titular pode iniciar, encerrar (`REALIZADA`) ou registrar ausência (`NAO_REALIZADA`) de uma consulta. `REALIZADA` só é alcançado a partir de `EM_ANDAMENTO`. |
+| **RN-27** | Consulta criada, remarcada ou cancelada pelo secretário em nome do paciente registra o secretário como autor na auditoria e notifica o paciente conforme RN-20. |
+| **RN-28** | A confirmação (`CONFIRMADA`) é **opcional**: o médico pode iniciar uma consulta `AGENDADA` ou `CONFIRMADA`. |ß
+
+#### Confirmação e notificação
+
+| ID | Regra |
+|---|---|
+| **RN-20** | Cada evento de negócio (`AGENDAMENTO`, `CONFIRMACAO`, `CANCELAMENTO`, `REMARCACAO`) dispara uma notificação por destinatário **e por canal** (e-mail e WhatsApp). Mudanças para `EM_ANDAMENTO`, `REALIZADA` e `NAO_REALIZADA` não geram notificação. |
+| **RN-24** | Somente **secretário** ou o **médico titular** pode confirmar consulta; a confirmação registra o autor (`confirmadaPor`) e o timestamp (`confirmadaEm`). |
+| **RN-25** | Falha no envio de notificação **não** desfaz a transação principal; a notificação entra em fila de nova tentativa (até 3 tentativas com backoff). Cada canal tem o seu registro de `Notificacao` e as suas tentativas. |
+| **RN-26** | O lembrete é disparado **24 h antes** do horário da consulta, apenas para status `CONFIRMADA` ou `AGENDADA`. |
