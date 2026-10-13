@@ -105,15 +105,15 @@ Cada evento gera uma notificação por destinatário e por canal (e-mail e Whats
 
 ## 2. Diagramas de Atividades
 
-Foi elaborado um diagrama de atividades completo, o **DA-01**, que reúne o fluxo principal de agendamento e todos os seus fluxos alternativos e de exceção. Por já cumprir o que foi pedido (fluxo principal com fluxos alternativos), o grupo optou por não criar diagramas separados para cancelamento, remarcação e confirmação; esses processos estão descritos nas seções 1.4 e 1.5 (decisão DM-11).
+Fizemos um único diagrama de atividades, o **DA-01**, com o fluxo principal de agendamento e todos os caminhos alternativos e de erro. Como ele já cobre o que foi pedido, não criamos diagramas separados para cancelar, remarcar e confirmar consulta; esses processos estão explicados nas seções 1.4 e 1.5 (decisão DM-11).
 
 ### 2.1 DA-01 — Agendamento de Consulta
 
-**Objetivo:** representar o processo completo de agendamento de consulta pelo paciente, desde a autenticação e a seleção da especialidade até o recebimento do comprovante, incluindo os fluxos alternativos e de exceção.
+**Objetivo:** mostrar o passo a passo do paciente para agendar uma consulta, do login até receber o comprovante, incluindo o que acontece quando algo dá errado.
 
-**Atores (raias):** Paciente, Sistema e Sistema de Notificação.
+**Quem participa (raias):** Paciente, Sistema e Sistema de Notificação.
 
-**Processo representado:** o paciente autenticado percorre a jornada de agendamento: seleciona a especialidade, o médico e um horário livre, revisa o resumo e confirma. O sistema reserva o horário de forma atômica (prevenindo corridas), grava a consulta como `AGENDADA`, marca o horário como `OCUPADO` e registra a auditoria. Em seguida, o fluxo se divide em dois ramos paralelos (*fork*): o sistema exibe o comprovante ao paciente, enquanto o Sistema de Notificação envia as mensagens. Esse segundo ramo se subdivide em outros dois, também em paralelo: um para o e-mail e outro para o WhatsApp, cada um com até 3 tentativas e com seu próprio resultado (`ENVIADA` ou `FALHOU`). Todos se juntam (*join*) no fim, mas o comprovante **não espera** o envio.
+**Como funciona:** o paciente faz login (se ainda não estiver logado), escolhe a especialidade, o médico e um horário livre, confere o resumo e confirma. O sistema reserva o horário de uma vez só, para dois pacientes não pegarem a mesma vaga, grava a consulta como `AGENDADA`, marca o horário como `OCUPADO` e registra a auditoria. Depois disso, o fluxo se divide em duas partes que andam ao mesmo tempo: o sistema mostra o comprovante ao paciente e o Sistema de Notificação envia as mensagens. O envio também se divide em dois, e-mail e WhatsApp, cada um com até 3 tentativas e com seu próprio resultado (`ENVIADA` ou `FALHOU`). No fim tudo se junta, mas o comprovante não fica esperando o envio.
 
 ![DA-01 — Diagrama de atividades: agendamento de consulta](assets/DA01_Agendamento.svg)
 
@@ -250,20 +250,20 @@ endlegend
 
 </details>
 
-**Explicação:** o diagrama usa raias (*swimlanes*) para separar o que é ação do paciente, processamento do sistema e envio do Sistema de Notificação. Os laços (`repeat`) representam os retornos à escolha de horário (sem vagas, horário fora da janela e horário ocupado) e a retomada do resumo após novo login. Os nós rosa marcam fluxos alternativos e de exceção. O *fork/join* representa o paralelismo real do processo: exibir o comprovante e enviar a notificação acontecem ao mesmo tempo, e uma falha de envio nunca desfaz o agendamento.
+**Como ler o diagrama:** as raias separam o que cada ator faz. Os laços (`repeat`) voltam para a escolha de horário quando não há vagas, quando o horário está fora da janela ou quando outro paciente pegou o horário, e voltam para o resumo depois de um novo login. Os blocos rosa são os caminhos alternativos e de erro. O fork/join mostra o que acontece ao mesmo tempo: o comprovante aparece enquanto as mensagens são enviadas, e se o envio falhar o agendamento continua valendo.
 
-**Cobertura dos fluxos alternativos (A) e de exceção (E) no DA-01:**
+**Onde cada fluxo alternativo (A) e de erro (E) aparece no DA-01:**
 
 | Fluxo | Onde aparece no diagrama |
 |---|---|
-| Autenticação inicial | Início: "Sessão autenticada?" e login; sem login, o fluxo termina |
-| A1 — sem horários | "Há horários disponíveis?" não → sugerir próximos dias → o paciente escolhe outro período/médico (volta ao laço) ou desiste |
-| A2 — horário ocupado por outro paciente | "Slot ainda disponível?" não → mensagem "Este horário acabou de ser ocupado" → volta à escolha de horário |
-| A3 — falha na notificação | Ramo do Sistema de Notificação: falha no envio → até 3 tentativas → `FALHOU`; a consulta continua `AGENDADA` |
-| E1 — sessão expirada | "Sessão ainda válida?" não → novo login → retoma no resumo da consulta |
-| E2 — falha de persistência | "Persistência bem-sucedida?" não → rollback total (horário volta a `LIVRE`) → mensagem de erro |
-| E3 — horário fora da janela | "Horário dentro da janela permitida?" não → bloquear seleção e informar a restrição |
-| Desistências | "Paciente confirma?" não, e "Escolhe outro período ou outro médico?" não |
+| Login inicial | No começo, em "Sessão autenticada?"; se o login falhar, o fluxo termina |
+| A1 — sem horários | "Há horários disponíveis?" não → o sistema sugere outros dias → o paciente escolhe outro período ou médico (volta para a escolha de horário) ou desiste |
+| A2 — horário tomado por outro paciente | "Slot ainda disponível?" não → aviso "Este horário acabou de ser ocupado" → volta para a escolha de horário |
+| A3 — falha no envio da mensagem | No Sistema de Notificação: falha no envio → até 3 tentativas → `FALHOU`; a consulta continua `AGENDADA` |
+| E1 — sessão expirou | "Sessão ainda válida?" não → novo login → volta para o resumo da consulta |
+| E2 — falha ao gravar | "Persistência bem-sucedida?" não → desfaz tudo (o horário volta a `LIVRE`) → mensagem de erro |
+| E3 — horário fora da janela | "Horário dentro da janela permitida?" não → bloqueia a seleção e explica a restrição |
+| Desistências | "Paciente confirma?" não, ou "Escolhe outro período ou outro médico?" não |
 
 ---
 
