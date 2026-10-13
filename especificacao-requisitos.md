@@ -99,7 +99,7 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
   - Bloquear/desbloquear horários específicos (férias, imprevistos);
   - Visualizar sua agenda diária/semanal;
   - Iniciar e encerrar consultas (ou registrar a ausência do paciente);
-  - Confirmar as próprias consultas (RN-24);
+  - Confirmar as próprias consultas (RN-26);
   - Visualizar histórico de suas consultas.
 - **Permissões:**
   - Ler e alterar **apenas** sua própria agenda e seus dados cadastrais;
@@ -120,7 +120,7 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
 - **Permissões:**
   - Ler agenda de todos os médicos cadastrados;
   - Alterar o **status** de confirmação de consultas;
-  - Criar, remarcar e cancelar consultas **em nome do paciente** (autor registrado na auditoria, RN-27);
+  - Criar, remarcar e cancelar consultas **em nome do paciente** (autor registrado na auditoria, RN-23);
   - **Não** pode alterar a disponibilidade de agenda do médico (exceto bloqueios operacionais autorizados — ver RN-14);
   - **Não** pode apagar consultas (apenas cancelar, com registro de motivo).
 - **Interações com o sistema:**
@@ -177,52 +177,52 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
 | ID | Requisito | Descrição detalhada | Regras de negócio |
 |---|---|---|---|
 | RF-01 | Cadastrar paciente | O sistema deve permitir o cadastro de paciente com nome, CPF, data de nascimento, e-mail, telefone e senha. | RN-01, RN-02, RN-03 |
-| RF-02 | Autenticar usuário | O sistema deve autenticar paciente, médico, secretário e administrador por e-mail + senha, diferenciando perfis. | RN-04, RN-22 |
+| RF-02 | Autenticar usuário | O sistema deve autenticar paciente, médico, secretário e administrador por e-mail + senha, diferenciando perfis. | RN-04, RN-06 |
 | RF-03 | Recuperar senha | O sistema deve permitir redefinição de senha por link enviado ao e-mail cadastrado. | RN-05 |
-| RF-04 | Gerenciar cadastro de médico e secretário | O **Administrador** deve poder cadastrar médico (nome, CRM, UF, especialidade(s) e contato) e secretário (nome, matrícula e contato). | RN-02, RN-06, RN-07 |
-| RF-05 | Gerenciar especialidades | O **Administrador** deve poder manter o catálogo de especialidades (nome, descrição, status ATIVA/INATIVA). | RN-08 |
+| RF-04 | Gerenciar cadastro de médico e secretário | O **Administrador** deve poder cadastrar médico (nome, CRM, UF, especialidade(s) e contato) e secretário (nome, matrícula e contato). | RN-02, RN-07, RN-08 |
+| RF-05 | Gerenciar especialidades | O **Administrador** deve poder manter o catálogo de especialidades (nome, descrição, status ATIVA/INATIVA). | RN-09 |
 
 ### 3.2 Módulo de Consulta de Médicos e Especialidades
 
 | ID | Requisito | Descrição detalhada | Regras de negócio |
 |---|---|---|---|
-| RF-06 | Listar especialidades | O sistema deve exibir todas as especialidades ativas para busca. | RN-08 |
-| RF-07 | Listar médicos por especialidade | Dada uma especialidade, o sistema deve listar os médicos ativos que a atendem. | RN-06, RN-09 |
-| RF-08 | Exibir horários disponíveis | Para cada médico, o sistema deve exibir apenas os horários **livres** dentro da sua disponibilidade, considerando o horário atual. | RN-10, RN-11, RN-12 |
+| RF-06 | Listar especialidades | O sistema deve exibir todas as especialidades ativas para busca. | RN-09 |
+| RF-07 | Listar médicos por especialidade | Dada uma especialidade, o sistema deve listar os médicos ativos que a atendem. | RN-07, RN-10 |
+| RF-08 | Exibir horários disponíveis | Para cada médico, o sistema deve exibir apenas os horários **livres** dentro da sua disponibilidade, considerando o horário atual. | RN-11, RN-12, RN-13 |
 
 ### 3.3 Módulo de Agendamento
 
 | ID | Requisito | Descrição detalhada | Regras de negócio |
 |---|---|---|---|
-| RF-09 | Agendar consulta | O paciente deve poder agendar consulta selecionando especialidade → médico → data → horário livre, com confirmação final antes do envio. | RN-09, RN-10, RN-12, RN-13, RN-16 |
-| RF-10 | Confirmar agendamento | Após a reserva bem-sucedida, o sistema deve exibir resumo da consulta e disparar notificação de agendamento. | RN-20, RN-25 |
-| RF-11 | Visualizar minhas consultas | O paciente deve poder listar suas consultas futuras e passadas com respectivo status. | RN-17 |
-| RF-12 | Cancelar consulta | O paciente (ou secretário) deve poder cancelar uma consulta futura, informando o motivo (obrigatório), liberando o horário. | RN-18, RN-19 |
-| RF-13 | Remarcar consulta | O paciente titular (ou o secretário) deve poder remarcar uma consulta futura **com o mesmo médico**, informando o motivo (obrigatório) e validando o novo horário como uma nova reserva. | RN-12, RN-15, RN-18, RN-19 |
-| RF-22 | Agir em nome do paciente | O secretário deve poder agendar, remarcar e cancelar consultas em nome de um paciente cadastrado (atendimento presencial/telefônico), com as mesmas validações de RF-09, RF-12 e RF-13. | RN-09, RN-10, RN-12, RN-13, RN-16, RN-18, RN-27 |
+| RF-09 | Agendar consulta | O paciente deve poder agendar consulta selecionando especialidade → médico → data → horário livre, com confirmação final antes do envio. | RN-10, RN-11, RN-13, RN-16, RN-18 |
+| RF-10 | Confirmar agendamento | Após a reserva bem-sucedida, o sistema deve exibir resumo da consulta e disparar notificação de agendamento. | RN-25, RN-27 |
+| RF-11 | Visualizar minhas consultas | O paciente deve poder listar suas consultas futuras e passadas com respectivo status. | RN-19 |
+| RF-12 | Cancelar consulta | O paciente (ou secretário) deve poder cancelar uma consulta futura, informando o motivo (obrigatório), liberando o horário. | RN-20, RN-21 |
+| RF-13 | Remarcar consulta | O paciente titular (ou o secretário) deve poder remarcar uma consulta futura **com o mesmo médico**, informando o motivo (obrigatório) e validando o novo horário como uma nova reserva. | RN-13, RN-17, RN-20, RN-21 |
+| RF-22 | Agir em nome do paciente | O secretário deve poder agendar, remarcar e cancelar consultas em nome de um paciente cadastrado (atendimento presencial/telefônico), com as mesmas validações de RF-09, RF-12 e RF-13. | RN-10, RN-11, RN-13, RN-16, RN-18, RN-20, RN-23 |
 
 ### 3.4 Módulo de Agenda do Médico
 
 | ID | Requisito | Descrição detalhada | Regras de negócio |
 |---|---|---|---|
-| RF-14 | Definir disponibilidade | O médico deve poder definir dias da semana e faixas horárias de atendimento, com antecedência mínima configurável. | RN-10, RN-11, RN-12, RN-21 |
-| RF-15 | Bloquear horário | O médico deve poder bloquear um horário específico já disponível (sem consulta), tornando-o indisponível. O secretário pode registrar bloqueios operacionais justificados. | RN-14, RN-21 |
-| RF-16 | Visualizar agenda | O médico e o secretário devem poder visualizar a agenda em visão diária/semanal, com status de cada consulta. | RN-17 |
-| RF-17 | Atender e encerrar consulta | O médico deve poder iniciar a consulta, marcá-la como **realizada** ao final do atendimento ou registrar a **ausência** do paciente (`NAO_REALIZADA`). | RN-23, RN-28 |
+| RF-14 | Definir disponibilidade | O médico deve poder definir dias da semana e faixas horárias de atendimento, com antecedência mínima configurável. | RN-11, RN-12, RN-13, RN-15 |
+| RF-15 | Bloquear horário | O médico deve poder bloquear um horário específico já disponível (sem consulta), tornando-o indisponível. O secretário pode registrar bloqueios operacionais justificados. | RN-14, RN-15 |
+| RF-16 | Visualizar agenda | O médico e o secretário devem poder visualizar a agenda em visão diária/semanal, com status de cada consulta. | RN-19 |
+| RF-17 | Atender e encerrar consulta | O médico deve poder iniciar a consulta, marcá-la como **realizada** ao final do atendimento ou registrar a **ausência** do paciente (`NAO_REALIZADA`). | RN-22, RN-24 |
 
 ### 3.5 Módulo de Confirmação (Secretário)
 
 | ID | Requisito | Descrição detalhada | Regras de negócio |
 |---|---|---|---|
-| RF-18 | Confirmar consulta | O secretário (ou o médico titular) deve poder confirmar uma consulta com status *agendada*, alterando-a para *confirmada* e registrando quem confirmou e quando. | RN-20, RN-24, RN-28 |
-| RF-19 | Visualizar pendências | O sistema deve listar as consultas pendentes de confirmação, filtráveis por médico, data e status. | RN-24 |
+| RF-18 | Confirmar consulta | O secretário (ou o médico titular) deve poder confirmar uma consulta com status *agendada*, alterando-a para *confirmada* e registrando quem confirmou e quando. | RN-24, RN-25, RN-26 |
+| RF-19 | Visualizar pendências | O sistema deve listar as consultas pendentes de confirmação, filtráveis por médico, data e status. | RN-26 |
 
 ### 3.6 Módulo de Notificação
 
 | ID | Requisito | Descrição detalhada | Regras de negócio |
 |---|---|---|---|
-| RF-20 | Notificar eventos | O sistema deve disparar notificações nos eventos: agendada, confirmada, cancelada, remarcada, lembrete pré-consulta, conforme a tabela evento × destinatário (seção 5.5). | RN-20, RN-25, RN-26 |
-| RF-21 | Registrar notificações | Cada notificação deve ser persistida com destinatário, evento, canal, data/hora e status de entrega. | RN-25 |
+| RF-20 | Notificar eventos | O sistema deve disparar notificações nos eventos: agendada, confirmada, cancelada, remarcada, lembrete pré-consulta, conforme a tabela evento × destinatário (seção 5.5). | RN-25, RN-27, RN-28 |
+| RF-21 | Registrar notificações | Cada notificação deve ser persistida com destinatário, evento, canal, data/hora e status de entrega. | RN-27 |
 
 ---
 
@@ -301,53 +301,53 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
 | **RN-03** | A senha deve ter no mínimo 8 caracteres, contendo ao menos 1 letra e 1 número. |
 | **RN-04** | O sistema autentica por e-mail + senha e deriva o perfil (PACIENTE, MEDICO, SECRETARIO, ADMINISTRADOR) do cadastro. |
 | **RN-05** | Links de redefinição de senha expiram em 30 minutos e são de uso único. |
-| **RN-22** | Após 5 falhas consecutivas de login, a conta é bloqueada por 15 minutos. |
+| **RN-06** | Após 5 falhas consecutivas de login, a conta é bloqueada por 15 minutos. |
 
 ### 5.2 Cadastros e catálogo
 
 | ID | Regra |
 |---|---|
-| **RN-06** | Todo médico deve ter **ao menos uma** especialidade ativa para aparecer nas buscas. |
-| **RN-07** | O par (CRM, UF) do médico é **único** no sistema. |
-| **RN-08** | Só são exibidas especialidades com `status = ATIVA`. |
-| **RN-09** | Paciente, médico, secretário e administrador só são exibidos com `status = ATIVO`; cadastro inativo não pode gerar novas consultas. |
+| **RN-07** | Todo médico deve ter **ao menos uma** especialidade ativa para aparecer nas buscas. |
+| **RN-08** | O par (CRM, UF) do médico é **único** no sistema. |
+| **RN-09** | Só são exibidas especialidades com `status = ATIVA`. |
+| **RN-10** | Paciente, médico, secretário e administrador só são exibidos com `status = ATIVO`; cadastro inativo não pode gerar novas consultas. |
 
 ### 5.3 Disponibilidade e horários
 
 | ID | Regra |
 |---|---|
-| **RN-10** | Um horário só é considerado **disponível** se: pertencer à disponibilidade do médico, estar dentro do expediente configurado, não estiver bloqueado e **não houver consulta ativa** (AGENDADA, CONFIRMADA ou EM_ANDAMENTO) naquele slot. |
-| **RN-11** | Cada consulta ocupa **um slot**, de **30 minutos por padrão** e configurável pelo médico em múltiplos de 30 (ver Premissa P-04), sem sobreposição entre consultas do mesmo médico. |
-| **RN-12** | Janela de agendamento (fonte única): só é permitido agendar a partir de `agora + antecedenciaMinima` da agenda do médico (**padrão 30 min**) e com no máximo **90 dias** de antecedência. |
-| **RN-21** | Alterações de disponibilidade ou bloqueios que atinjam consultas já existentes **não** as cancelam automaticamente; o sistema deve sinalizar conflito e exigir tratamento manual. |
+| **RN-11** | Um horário só é considerado **disponível** se: pertencer à disponibilidade do médico, estar dentro do expediente configurado, não estiver bloqueado e **não houver consulta ativa** (AGENDADA, CONFIRMADA ou EM_ANDAMENTO) naquele slot. |
+| **RN-12** | Cada consulta ocupa **um slot**, de **30 minutos por padrão** e configurável pelo médico em múltiplos de 30 (ver Premissa P-04), sem sobreposição entre consultas do mesmo médico. |
+| **RN-13** | Janela de agendamento (fonte única): só é permitido agendar a partir de `agora + antecedenciaMinima` da agenda do médico (**padrão 30 min**) e com no máximo **90 dias** de antecedência. |
 | **RN-14** | Bloqueios operacionais de horário feitos pelo secretário exigem justificativa e ficam registrados em auditoria. *(Premissa P-07)* |
+| **RN-15** | Alterações de disponibilidade ou bloqueios que atinjam consultas já existentes **não** as cancelam automaticamente; o sistema deve sinalizar conflito e exigir tratamento manual. |
 
 ### 5.4 Ciclo de vida da consulta
 
 | ID | Regra |
 |---|---|
-| **RN-13** | Toda consulta nasce com status `AGENDADA` e está sempre associada a **1 paciente, 1 médico, 1 especialidade e 1 slot de horário**. |
-| **RN-15** | A **remarcação** é modelada como: cancelamento da consulta original (status `REMARCADA`, com vínculo para a nova) + criação de nova consulta — garantindo histórico completo. A remarcação mantém o **mesmo médico**; trocar de médico exige cancelar e agendar novamente. |
-| **RN-16** | Apenas uma consulta pode ocupar o mesmo (médico, data, horário) com status ativo; consultas canceladas ou remarcadas permanecem como histórico, vinculadas ao mesmo `Horario`. |
-| **RN-17** | Consultas `AGENDADA` ou `CONFIRMADA` cujo slot terminou sem terem sido iniciadas transicionam automaticamente para `NAO_REALIZADA` (executado pelo Sistema/agendador, P-21). |
-| **RN-18** | Cancelamento/remarcação só é permitido **até 2 horas antes** do horário da consulta (ver Premissa P-05). Exceção: a recusa do paciente registrada na confirmação (F-05, A1) não está sujeita a essa janela. |
-| **RN-19** | Cancelamentos e remarcações exigem **confirmação explícita** do usuário e registram autor (`canceladaPor`) e data (`canceladaEm`). O **cancelamento e a remarcação** exigem ainda **motivo obrigatório** (`motivoCancelamento`), para formar o histórico de motivos. |
-| **RN-23** | Somente o médico titular pode iniciar, encerrar (`REALIZADA`) ou registrar ausência (`NAO_REALIZADA`) de uma consulta. `REALIZADA` só é alcançado a partir de `EM_ANDAMENTO`. |
-| **RN-27** | Consulta criada, remarcada ou cancelada pelo secretário em nome do paciente registra o secretário como autor na auditoria (RNF-23) e notifica o paciente conforme RN-20. |
-| **RN-28** | A confirmação (`CONFIRMADA`) é **opcional**: o médico pode iniciar uma consulta `AGENDADA` ou `CONFIRMADA` (Premissa P-20). |
+| **RN-16** | Toda consulta nasce com status `AGENDADA` e está sempre associada a **1 paciente, 1 médico, 1 especialidade e 1 slot de horário**. |
+| **RN-17** | A **remarcação** é modelada como: cancelamento da consulta original (status `REMARCADA`, com vínculo para a nova) + criação de nova consulta — garantindo histórico completo. A remarcação mantém o **mesmo médico**; trocar de médico exige cancelar e agendar novamente. |
+| **RN-18** | Apenas uma consulta pode ocupar o mesmo (médico, data, horário) com status ativo; consultas canceladas ou remarcadas permanecem como histórico, vinculadas ao mesmo `Horario`. |
+| **RN-19** | Consultas `AGENDADA` ou `CONFIRMADA` cujo slot terminou sem terem sido iniciadas transicionam automaticamente para `NAO_REALIZADA` (executado pelo Sistema/agendador, P-21). |
+| **RN-20** | Cancelamento/remarcação só é permitido **até 2 horas antes** do horário da consulta (ver Premissa P-05). Exceção: a recusa do paciente registrada na confirmação (F-05, A1) não está sujeita a essa janela. |
+| **RN-21** | Cancelamentos e remarcações exigem **confirmação explícita** do usuário e registram autor (`canceladaPor`) e data (`canceladaEm`). O **cancelamento e a remarcação** exigem ainda **motivo obrigatório** (`motivoCancelamento`), para formar o histórico de motivos. |
+| **RN-22** | Somente o médico titular pode iniciar, encerrar (`REALIZADA`) ou registrar ausência (`NAO_REALIZADA`) de uma consulta. `REALIZADA` só é alcançado a partir de `EM_ANDAMENTO`. |
+| **RN-23** | Consulta criada, remarcada ou cancelada pelo secretário em nome do paciente registra o secretário como autor na auditoria (RNF-23) e notifica o paciente conforme RN-25. |
+| **RN-24** | A confirmação (`CONFIRMADA`) é **opcional**: o médico pode iniciar uma consulta `AGENDADA` ou `CONFIRMADA` (Premissa P-20). |
 
 **Tabela de transições do status da consulta** (fonte única; substitui o diagrama de estados):
 
 | De | Evento | Para | Quem | Regras |
 |---|---|---|---|---|
-| — | agendar | `AGENDADA` | Paciente, Secretário (RF-22) | RN-13 |
-| `AGENDADA` | confirmar | `CONFIRMADA` | Secretário, Médico titular | RN-24 |
-| `AGENDADA`, `CONFIRMADA` | iniciar | `EM_ANDAMENTO` | Médico titular | RN-23, RN-28 |
-| `AGENDADA`, `CONFIRMADA` | cancelar (≥ 2 h) | `CANCELADA` | Paciente titular, Secretário | RN-18, RN-19 |
-| `AGENDADA`, `CONFIRMADA` | remarcar (≥ 2 h) | `REMARCADA` (+ nova `AGENDADA`) | Paciente titular, Secretário | RN-15, RN-18 |
-| `AGENDADA`, `CONFIRMADA` | slot terminou sem início | `NAO_REALIZADA` | Sistema (agendador) | RN-17 |
-| `AGENDADA`, `CONFIRMADA`, `EM_ANDAMENTO` | registrar ausência | `NAO_REALIZADA` | Médico titular | RN-23 |
-| `EM_ANDAMENTO` | encerrar | `REALIZADA` | Médico titular | RN-23 |
+| — | agendar | `AGENDADA` | Paciente, Secretário (RF-22) | RN-16 |
+| `AGENDADA` | confirmar | `CONFIRMADA` | Secretário, Médico titular | RN-26 |
+| `AGENDADA`, `CONFIRMADA` | iniciar | `EM_ANDAMENTO` | Médico titular | RN-22, RN-24 |
+| `AGENDADA`, `CONFIRMADA` | cancelar (≥ 2 h) | `CANCELADA` | Paciente titular, Secretário | RN-20, RN-21 |
+| `AGENDADA`, `CONFIRMADA` | remarcar (≥ 2 h) | `REMARCADA` (+ nova `AGENDADA`) | Paciente titular, Secretário | RN-17, RN-20 |
+| `AGENDADA`, `CONFIRMADA` | slot terminou sem início | `NAO_REALIZADA` | Sistema (agendador) | RN-19 |
+| `AGENDADA`, `CONFIRMADA`, `EM_ANDAMENTO` | registrar ausência | `NAO_REALIZADA` | Médico titular | RN-22 |
+| `EM_ANDAMENTO` | encerrar | `REALIZADA` | Médico titular | RN-22 |
 
 `CANCELADA`, `REMARCADA`, `REALIZADA` e `NAO_REALIZADA` são estados finais.
 
@@ -357,12 +357,12 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
 
 | ID | Regra |
 |---|---|
-| **RN-20** | Cada evento de negócio (`AGENDAMENTO`, `CONFIRMACAO`, `CANCELAMENTO`, `REMARCACAO`) dispara uma notificação por destinatário **e por canal** (e-mail e WhatsApp), conforme a tabela abaixo. Mudanças para `EM_ANDAMENTO`, `REALIZADA` e `NAO_REALIZADA` não geram notificação. |
-| **RN-24** | Somente **secretário** ou o **médico titular** pode confirmar consulta; a confirmação registra o autor (`confirmadaPor`) e o timestamp (`confirmadaEm`). |
-| **RN-25** | Falha no envio de notificação **não** desfaz a transação principal; a notificação entra em fila de nova tentativa (até 3 tentativas com backoff). Cada canal tem o seu registro de `Notificacao` e as suas tentativas. |
-| **RN-26** | O lembrete é disparado **24 h antes** do horário da consulta, apenas para status `CONFIRMADA` ou `AGENDADA` (disparado pelo Sistema/agendador, P-21). |
+| **RN-25** | Cada evento de negócio (`AGENDAMENTO`, `CONFIRMACAO`, `CANCELAMENTO`, `REMARCACAO`) dispara uma notificação por destinatário **e por canal** (e-mail e WhatsApp), conforme a tabela abaixo. Mudanças para `EM_ANDAMENTO`, `REALIZADA` e `NAO_REALIZADA` não geram notificação. |
+| **RN-26** | Somente **secretário** ou o **médico titular** pode confirmar consulta; a confirmação registra o autor (`confirmadaPor`) e o timestamp (`confirmadaEm`). |
+| **RN-27** | Falha no envio de notificação **não** desfaz a transação principal; a notificação entra em fila de nova tentativa (até 3 tentativas com backoff). Cada canal tem o seu registro de `Notificacao` e as suas tentativas. |
+| **RN-28** | O lembrete é disparado **24 h antes** do horário da consulta, apenas para status `CONFIRMADA` ou `AGENDADA` (disparado pelo Sistema/agendador, P-21). |
 
-**Tabela evento × destinatário** (fonte única para RN-20 e para os fluxos F-01, F-02, F-03 e F-05):
+**Tabela evento × destinatário** (fonte única para RN-25 e para os fluxos F-01, F-02, F-03 e F-05):
 
 | Evento (`TipoEvento`) | Paciente | Médico |
 |---|---|---|
@@ -409,7 +409,7 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
 - **Fluxos alternativos:**
   - **A1 (passo 4):** nenhum horário disponível → sistema sugere próximos dias com vagas e o paciente escolhe outro período/médico ou desiste;
   - **A2 (passo 8):** slot foi ocupado por outro usuário → mensagem *"Este horário acabou de ser ocupado"* e retorno ao passo 4;
-  - **A3 (passo 10):** falha no envio da notificação → agendamento **mantido**, notificação entra em retry (RN-25).
+  - **A3 (passo 10):** falha no envio da notificação → agendamento **mantido**, notificação entra em retry (RN-27).
 - **Fluxos de exceção:**
   - **E1:** sessão expirada → redirecionar ao login e retomar o fluxo do ponto em que parou (resumo de confirmação) após autenticação;
   - **E2:** falha de persistência → rollback total, mensagem de erro e nenhuma notificação emitida;
@@ -426,7 +426,7 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
 - **Pré-condições:**
   - Consulta com status `AGENDADA` ou `CONFIRMADA`;
   - Usuário autorizado (paciente titular ou secretário);
-  - Antecedência ≥ 2 h do horário (RN-18).
+  - Antecedência ≥ 2 h do horário (RN-20).
 - **Fluxo principal:**
   1. Usuário acessa a consulta e seleciona **Cancelar**;
   2. Sistema exibe dados da consulta e solicita o **motivo (obrigatório)**;
@@ -462,7 +462,7 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
   7. Sistema notifica o paciente (novo horário) e o médico;
   8. Auditoria registra os dois eventos vinculados.
 - **Fluxos alternativos:**
-  - **A1:** usuário deseja outro médico → a remarcação não se aplica (RN-15); a UI orienta a cancelar (F-02) e agendar novamente (F-01).
+  - **A1:** usuário deseja outro médico → a remarcação não se aplica (RN-17); a UI orienta a cancelar (F-02) e agendar novamente (F-01).
 - **Fluxos de exceção:**
   - **E1:** novo horário indisponível na confirmação → rollback, consulta original **inalterada**;
   - **E2:** janela vencida → inviabilizar remarcação;
@@ -485,7 +485,7 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
   6. Auditoria registrada.
 - **Fluxos alternativos:**
   - **A1:** sem consultas afetadas → gravação direta;
-  - **A2:** médico desativa um dia inteiro com consultas → o sistema **não** cancela automaticamente; lista as consultas para tratamento manual (RN-21).
+  - **A2:** médico desativa um dia inteiro com consultas → o sistema **não** cancela automaticamente; lista as consultas para tratamento manual (RN-15).
 - **Fluxos de exceção:**
   - **E1:** faixa horária inválida (início ≥ fim, slots não múltiplos de 30 min) → validação imediata.
 - **Pós-condições:** novos slots gerados; consultas futuras mantidas; auditoria gravada.
@@ -503,7 +503,7 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
   6. Notificações conforme a tabela 5.5;
   7. Auditoria gravada.
 - **Fluxos alternativos:**
-  - **A1:** paciente recusa → status `CANCELADA` com motivo *"Recusado pelo paciente"* (segue F-02 a partir do passo 5, **sem** a validação de janela de RN-18).
+  - **A1:** paciente recusa → status `CANCELADA` com motivo *"Recusado pelo paciente"* (segue F-02 a partir do passo 5, **sem** a validação de janela de RN-20).
 - **Fluxos de exceção:**
   - **E1:** consulta já confirmada/cancelada por terceiro → aviso de concorrência e atualização da lista.
 - **Pós-condições:** status `CONFIRMADA`; paciente notificado; elegível ao lembrete de 24 h.
@@ -519,15 +519,15 @@ Os atuais processos de agendamento em clínicas e consultórios costumam ser rea
   4. Atualiza cada registro `Notificacao` para `ENVIADA` conforme a entrega;
   5. Auditoria do evento.
 - **Fluxos alternativos:**
-  - **A1:** um dos canais indisponível → o outro canal segue normalmente e o canal com falha entra em retry (RN-25).
+  - **A1:** um dos canais indisponível → o outro canal segue normalmente e o canal com falha entra em retry (RN-27).
 - **Fluxos de exceção:**
-  - **E1:** falha após 3 tentativas em um canal → status `FALHOU` naquele canal, alerta para suporte; o negócio principal **não** é afetado (RN-25).
+  - **E1:** falha após 3 tentativas em um canal → status `FALHOU` naquele canal, alerta para suporte; o negócio principal **não** é afetado (RN-27).
 - **Pós-condições:** registro de notificação com status final; fila drenada.
 
 ### Fluxo F-07 — Encerrar consulta (médico)
 
 - **Objetivo:** finalizar o atendimento e liberar indicadores.
-- **Pré-condições:** médico titular autenticado; consulta `AGENDADA`, `CONFIRMADA` ou `EM_ANDAMENTO` (RN-28).
+- **Pré-condições:** médico titular autenticado; consulta `AGENDADA`, `CONFIRMADA` ou `EM_ANDAMENTO` (RN-24).
 - **Fluxo principal:**
   1. Médico seleciona a consulta na agenda;
   2. Marca **Iniciar** (→ `EM_ANDAMENTO`) durante o atendimento;
@@ -567,7 +567,7 @@ Usuario <|── Paciente | Medico | Secretario | Administrador   (generalizaç�
 Medico    *     ──  *     Especialidade   (N:N — médico atende várias especialidades)
 Medico    1     ◆─  1     Agenda          (composição: a agenda não existe sem o médico)
 Agenda    1     ◆─  *     Horario         (composição: agenda gera slots)
-Horario   1     ──  *     Consulta        (histórico; no máximo 1 ativa — RN-16)
+Horario   1     ──  *     Consulta        (histórico; no máximo 1 ativa — RN-18)
 
 Consulta  *     ──  1     Paciente
 Consulta  *     ──  1     Medico
@@ -640,7 +640,7 @@ Usuario   1     ──  *     Auditoria
 - **Responsabilidade:** unidade atômica de tempo; garante não sobreposição.
 - **Atributos:** `id: Long`, `data: Date`, `horaInicio: Time`, `horaFim: Time`, `situacao: SituacaoHorario` (LIVRE/BLOQUEADO/OCUPADO).
 - **Métodos:** `estaDisponivel(): boolean`, `bloquear(motivo): void`, `liberar(): void`, `ocupar(): void`.
-- **Relacionamentos:** N:1 com `Agenda` (composição); 1:N com `Consulta` (histórico; no máximo 1 ativa — RN-16).
+- **Relacionamentos:** N:1 com `Agenda` (composição); 1:N com `Consulta` (histórico; no máximo 1 ativa — RN-18).
 
 ### 8.8 `Consulta`
 
@@ -689,8 +689,8 @@ Principais cenários que merecem diagrama de sequência:
 | DS-01 | **Fluxo de agendamento completo** | Paciente, UI, Sistema(Aplicação), Agenda/Horario, Consulta, Notificacao | Cenário central do sistema; mostra validação de slot e publicação do evento. |
 | DS-03 | **Cancelamento pelo paciente (com bloqueio de janela)** | Paciente, UI, Sistema, Consulta, Horario, Notificacao | Mostra a regra de antecedência mínima e a liberação do slot. |
 | DS-04 | **Remarcação (dois registros vinculados)** | Paciente, Sistema, Consulta(origem), Consulta(nova), Horario, Notificacao | Mostra a relação de auto-vínculo e o rollback em caso de corrida. |
-| DS-05 | **Gerenciamento de disponibilidade com conflito** | Médico, UI, Agenda, Horario, Consulta(existente) | Mostra o cenário alternativo de conflito (RN-21). |
-| DS-06 | **Disparo de notificação com falha e retry** | Sistema de Notificação `<<system>>`, Fila, Consulta | Mostra ator secundário e tratamento assíncrono (RN-25). |
+| DS-05 | **Gerenciamento de disponibilidade com conflito** | Médico, UI, Agenda, Horario, Consulta(existente) | Mostra o cenário alternativo de conflito (RN-15). |
+| DS-06 | **Disparo de notificação com falha e retry** | Sistema de Notificação `<<system>>`, Fila, Consulta | Mostra ator secundário e tratamento assíncrono (RN-27). |
 | DS-07 | **Controle de acesso negado** | Usuário, Sistema(Auth), Recurso | Mostra guard de RBAC e exceção `NaoAutorizadoException`. |
 | DS-08 | **Corrida por horário (dois pacientes)** | Paciente A, Paciente B, Sistema, Horario | Cenário de exceção clássico: `HorarioIndisponivelException`. |
 
@@ -762,10 +762,10 @@ Todas as hipóteses adotadas durante a modelagem ficam explícitas abaixo:
 | **P-03** | O **Sistema de Notificação** é modelado como **ator externo `<<system>>`**, consumindo eventos. | A descrição o lista como ator; mantém o princípio de que o sistema não notifica a si mesmo. |
 | **P-04** | Duração **padrão de 30 minutos** por consulta, configurável pelo médico em múltiplos de 30 (`Agenda.duracaoSlot`). | Simplifica a geração de slots e evita granularidade arbitrária. |
 | **P-05** | Cancelamento/remarcação apenas com **≥ 2 h de antecedência**. | Prática comum em clínicas; reduz perda de agenda. Valor configurável. |
-| **P-06** | O **secretário pode agendar, remarcar e cancelar consultas em nome do paciente** (RF-22, RN-27). | A descrição diz que "secretários confirmam consultas"; foi ampliado de forma consistente com o papel de recepção (decisão da equipe). **Para escopo estrito, basta remover RF-22, RN-27 e as permissões correspondentes em 2.3 e 2.6.** |
+| **P-06** | O **secretário pode agendar, remarcar e cancelar consultas em nome do paciente** (RF-22, RN-23). | A descrição diz que "secretários confirmam consultas"; foi ampliado de forma consistente com o papel de recepção (decisão da equipe). **Para escopo estrito, basta remover RF-22, RN-23 e as permissões correspondentes em 2.3 e 2.6.** |
 | **P-07** | O secretário **não** altera agenda do médico, salvo bloqueios operacionais justificados (RN-14). | Preserva a autoridade do médico sobre a própria agenda. |
 | **P-08** | **Remarcação = cancelar + criar nova consulta**, com vínculo entre ambas. | Preserva histórico completo e evita perda de rastro de auditoria. |
-| **P-09** | Janela de agendamento definida em **RN-12** (antecedência mínima padrão de 30 min, máximo 90 dias). | Evita agendamento no passado e agenda demasiadamente longa. |
+| **P-09** | Janela de agendamento definida em **RN-13** (antecedência mínima padrão de 30 min, máximo 90 dias). | Evita agendamento no passado e agenda demasiadamente longa. |
 | **P-10** | A consulta **guarda a especialidade escolhida** no agendamento (associação própria, não derivada do médico). | Um médico atende várias especialidades; sem isso não se saberia sob qual delas a consulta foi marcada. |
 | **P-11** | **Multi-clínica/multi-tenant ficam fora de escopo** — um único contexto de clínica. | Não citado na descrição; evita complexidade indevida. |
 | **P-12** | **Pagamento, convênios e prontuário ficam fora de escopo.** | Não citados na descrição. |
@@ -776,8 +776,8 @@ Todas as hipóteses adotadas durante a modelagem ficam explícitas abaixo:
 | **P-17** | Toda entidade tem `id` surrogado (`Long`) + timestamps de criação/atualização. | Padrão de modelagem de dados consistente. |
 | **P-18** | IDs dos requisitos (RF/RNF) e regras (RN) seguem a numeração deste documento e devem ser **mantidos** nos diagramas para rastreabilidade. | Facilita a avaliação da coerência entre artefatos. |
 | **P-19** | Existe um quinto ator humano, o **Administrador**, responsável pelos cadastros de médicos, secretários e especialidades (RF-04, RF-05). | A descrição lista quatro atores, mas sem um responsável os cadastros-base ficariam sem dono. Decisão da equipe; o professor permite atores adicionais, sem limite. |
-| **P-20** | A **confirmação é opcional**: o médico pode iniciar consultas `AGENDADA` ou `CONFIRMADA` (RN-28). | Evita que consultas fiquem travadas se ninguém confirmar. |
-| **P-21** | O lembrete de 24 h (RN-26) e a transição automática para `NAO_REALIZADA` (RN-17) são executados por um **agendador interno** (Sistema), não por um ator humano. | Alguém precisa disparar eventos temporais; é infraestrutura, não ator de negócio. |
+| **P-20** | A **confirmação é opcional**: o médico pode iniciar consultas `AGENDADA` ou `CONFIRMADA` (RN-24). | Evita que consultas fiquem travadas se ninguém confirmar. |
+| **P-21** | O lembrete de 24 h (RN-28) e a transição automática para `NAO_REALIZADA` (RN-19) são executados por um **agendador interno** (Sistema), não por um ator humano. | Alguém precisa disparar eventos temporais; é infraestrutura, não ator de negócio. |
 | **P-22** | **Composição** é usada onde o ciclo de vida do todo governa as partes: `Medico`–`Agenda`, `Agenda`–`Horario` e `Consulta`–`Notificacao`. `Auditoria` e `Horario`–`Consulta` ficam como associação simples. | Auditoria deve sobreviver ao usuário, e a consulta é histórico que sobrevive à liberação do horário. |
 | **P-23** | As notificações são enviadas por **EMAIL e WHATSAPP**, em paralelo, com **um registro `Notificacao` por canal**; não há canal preferido nem canal de reserva. | São os canais mais usados; um registro por canal permite retry e status de entrega independentes. Decisão da equipe. |
 | **P-24** | O **motivo do cancelamento e da remarcação é obrigatório**. | Gera mais dados e um histórico de motivos (`motivoCancelamento`, também usado na remarcação). Decisão da equipe. |
@@ -789,10 +789,10 @@ Todas as hipóteses adotadas durante a modelagem ficam explícitas abaixo:
 
 | Artefato | Requisitos envolvidos |
 |---|---|
-| DA-01 Agendamento | RF-06…RF-10, RN-10…RN-13, RN-16 |
-| DA-03 Remarcação | RF-13, RN-15, RN-18 |
-| DA-05 Agenda do médico | RF-14…RF-16, RN-10, RN-11, RN-21 |
-| DS-01 Sequência de agendamento | RF-09, RF-10, RF-20, RN-16, RN-20 |
+| DA-01 Agendamento | RF-06…RF-10, RN-12…RN-16, RN-18, RN-20 |
+| DA-03 Remarcação | RF-13, RN-17, RN-20 |
+| DA-05 Agenda do médico | RF-14…RF-16, RN-11, RN-12, RN-15 |
+| DS-01 Sequência de agendamento | RF-09, RF-10, RF-20, RN-18, RN-25 |
 | Classes | Todos os RF e RN |
 
 ---
