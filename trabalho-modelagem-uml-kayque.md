@@ -267,13 +267,13 @@ endlegend
 
 ## 3. Diagramas de Sequência
 
-Foi elaborado um diagrama de sequência completo, o **DS-01**, sobre o mesmo cenário do DA-01 (agendamento). Ele mostra as mensagens trocadas em ordem temporal entre o paciente, o sistema, os objetos de negócio e o Sistema de Notificação, com os retornos e os cenários alternativos e de exceção.
+O **DS-01** cobre o mesmo cenário do DA-01 sob uma perspectiva diferente: enquanto o diagrama de atividades mapeia *o que* acontece, o diagrama de sequência revela *como* os participantes se comunicam para que isso aconteça. Ele ordena cronologicamente as mensagens trocadas entre o paciente, o sistema, os objetos de negócio (`Agenda`, `Horario`, `Consulta`, `Notificacao`) e o Sistema de Notificação, incluindo os retornos e todos os cenários alternativos e de exceção.
 
 ### 3.1 DS-01 — Agendamento de Consulta (fluxo completo)
 
-**Objetivo:** detalhar a sequência de mensagens durante o agendamento, destacando a reserva atômica do horário, a criação da consulta e o envio assíncrono das notificações.
+**Objetivo:** documentar, mensagem a mensagem, o que acontece durante um agendamento. Os pontos centrais são a reserva atômica do horário — que previne conflitos de concorrência —, a criação da consulta e o rollback em caso de falha, e o envio assíncrono e paralelo das notificações por e-mail e WhatsApp.
 
-**Cenário representado:** paciente autenticado agenda uma consulta, com tratamento para ausência de horários, horário fora da janela, sessão expirada, concorrência na reserva, falha de gravação e falha de notificação.
+**Cenário representado:** um paciente autenticado seleciona especialidade, médico e horário, e conclui o agendamento. O diagrama trata todas as situações excepcionais relevantes: ausência de horários disponíveis, seleção de horário fora da janela permitida, sessão expirada, tentativa de reservar um horário já ocupado por outro paciente, falha de gravação no banco e falha no envio da notificação.
 
 ![DS-01 — Diagrama de sequência: agendamento de consulta](assets/DS01_Agendamento.svg)
 
@@ -410,16 +410,16 @@ deactivate S
 
 </details>
 
-**Explicação:**
+**Explicação dos pontos-chave:**
 
-- **Reserva atômica:** o horário é reservado por uma única chamada, `Horario.ocupar()`, que lança `HorarioIndisponivelException` se outro paciente já tomou o slot (mensagens 17 e 18). Assim não existe um intervalo entre "verificar" e "ocupar" em que duas reservas possam passar juntas.
-- **Rollback:** se a gravação da consulta falha, o sistema devolve o horário com `Horario.liberar()` (mensagem 25) e informa o erro, sem enviar nenhuma notificação.
-- **Criação de objetos:** `Consulta` e as duas `Notificacao` (uma por canal) aparecem como objetos criados durante o cenário (setas `<<create>>`, mensagens 23, 29 e 30). A mensagem 15, `agendar(...)`, corresponde a `Paciente.agendar(medico, especialidade, horario)`.
-- **Paralelismo:** o bloco `par` mostra que o comprovante (mensagem 31), o envio por e-mail e o envio por WhatsApp acontecem em paralelo, como os *forks* do DA-01. As setas com ponta aberta (`->>`) são mensagens assíncronas.
-- **Retry por canal:** cada canal tem o seu laço (mensagens 32 a 37 para e-mail e 38 a 43 para WhatsApp), que tenta o envio até 3 vezes. Se a entrega é confirmada, o bloco `break` encerra o laço. Após 3 falhas, o status fica `FALHOU` naquele canal; o outro canal não é afetado e a consulta permanece `AGENDADA`.
-- **Participante `Sistema`:** representa a camada de aplicação, que orquestra as chamadas. As mensagens enviadas a ele (`iniciarAgendamento`, `selecionarMedico` e outras) são operações desse controlador, e não métodos das classes de domínio (decisão DM-03).
+- **Reserva atômica (mensagens 17–18):** quando o paciente confirma o horário, o sistema chama `Horario.ocupar()` em uma única operação indivisível. Se outro paciente chegou primeiro, o método lança `HorarioIndisponivelException` e o fluxo segue para A2 — nunca existe uma janela de tempo entre "verificar disponibilidade" e "efetivar a reserva" que permita duas confirmações simultâneas do mesmo slot.
+- **Rollback em caso de falha (mensagem 25):** se a criação da `Consulta` falha por problema de persistência (E2), o sistema desfaz imediatamente a reserva chamando `Horario.liberar()`, devolvendo o slot ao estado `LIVRE`. Nenhuma notificação é disparada nesse caso, garantindo consistência entre os dados e o que o paciente recebe.
+- **Criação de objetos em tempo de execução (mensagens 23, 29 e 30):** `Consulta` e os dois objetos `Notificacao` — um por canal — só existem a partir do momento em que são criados no fluxo (setas `<<create>>`). Isso torna explícito que a criação é parte do processo de agendamento, e não algo pré-existente. A mensagem 15, `agendar(...)`, corresponde à operação `Paciente.agendar(medico, especialidade, horario)` do diagrama de classes.
+- **Paralelismo no envio (mensagem 31 em diante):** assim que a consulta é gravada com sucesso, o bloco `par` divide o fluxo em três ramos simultâneos: entrega do comprovante ao paciente, envio por e-mail e envio por WhatsApp. Esse comportamento espelha os *forks* do DA-01. As setas com ponta aberta (`->>`) indicam que as chamadas ao Sistema de Notificação são assíncronas — o sistema não espera a confirmação de entrega para liberar o paciente.
+- **Retentativas independentes por canal (mensagens 32–43):** cada canal possui seu próprio laço de até 3 tentativas com *backoff* entre elas. Quando uma entrega é confirmada, o bloco `break` encerra o laço daquele canal. Após 3 falhas consecutivas, o status do objeto `Notificacao` passa para `FALHOU` — mas isso afeta apenas o canal em questão; o outro canal continua normalmente e o status da consulta permanece `AGENDADA`.
+- **Papel do participante `Sistema`:** representa a camada de aplicação, responsável por orquestrar todas as chamadas. As mensagens que chegam a ele (`iniciarAgendamento`, `selecionarMedico`, `selecionarHorario` e outras) são operações do controlador de aplicação, não métodos das classes de domínio — separação intencional conforme a decisão de modelagem DM-03.
 
-**Correspondência com os fluxos alternativos (A) e de exceção (E):**
+A tabela abaixo mapeia cada fluxo alternativo (A) e de exceção (E) às mensagens do diagrama onde ele é tratado:
 
 | Fluxo | Mensagens |
 |---|---|
