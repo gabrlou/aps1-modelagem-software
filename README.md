@@ -34,9 +34,10 @@
 
 Este repositório contém a especificação de requisitos e os artefatos de modelagem UML (Diagramas de Atividades, Sequência e Classes) desenvolvidos para a **APS 1** da disciplina de Modelagem de Software.
 
-O projeto disponibiliza duas versões integradas do trabalho:
+O projeto disponibiliza três formatos integrados do trabalho:
 1. **Documento em Markdown ([trabalho-modelagem-uml.md](trabalho-modelagem-uml.md)):** versão navegável diretamente pelo GitHub.
 2. **Relatório Acadêmico ABNT ([latex/trabalho-modelagem-uml.pdf](latex/trabalho-modelagem-uml.pdf)):** versão tipográfica oficial diagramada em LaTeX conforme as normas NBR 14724, NBR 6024 e NBR 6027.
+3. **Apresentação em Slides ([slides/apresentacao-aps1.pdf](slides/apresentacao-aps1.pdf)):** apresentação visual diagramada em Beamer (template UFG/INF) planejada para defesa de até 20 minutos.
 
 ---
 
@@ -63,6 +64,9 @@ aps1-modelagem-software/
 ├── scripts/
 │   ├── compilar.sh
 │   └── renderizar-diagramas.js
+├── slides/
+│   ├── apresentacao-aps1.pdf
+│   └── apresentacao-aps1.tex
 ├── .gitignore
 ├── README.md
 └── trabalho-modelagem-uml.md
@@ -73,6 +77,7 @@ aps1-modelagem-software/
 ## 🧭 Guia de Navegação
 
 - 📑 **[latex/trabalho-modelagem-uml.pdf](latex/trabalho-modelagem-uml.pdf):** Relatório oficial compilado em formato ABNT (NBR 14724 / NBR 6023).
+- 📽️ **[slides/apresentacao-aps1.pdf](slides/apresentacao-aps1.pdf):** Apresentação em slides (Beamer UFG/INF) para exposição oral de até 20 minutos.
 - 📄 **[trabalho-modelagem-uml.md](trabalho-modelagem-uml.md):** Documentação completa consolidada para navegação no GitHub.
 - 📋 **[docs/especificacao-requisitos.md](docs/especificacao-requisitos.md):** Engenharia de requisitos detalhada (RF, RNF, RN e fluxos operacionais).
 - 📖 **[docs/instrucao-inicial.md](docs/instrucao-inicial.md):** Enunciado oficial e diretrizes da atividade.
@@ -80,15 +85,15 @@ aps1-modelagem-software/
 
 ---
 
-## 🛠️ Como Compilar o PDF Oficial
+## 🛠️ Como Compilar os PDFs
 
-Para compilar o relatório acadêmico e atualizar o [latex/trabalho-modelagem-uml.pdf](latex/trabalho-modelagem-uml.pdf), basta executar o script unificado na raiz do projeto:
+Para compilar o relatório acadêmico e os slides da apresentação, basta executar o script unificado na raiz do projeto:
 
 ```bash
 ./scripts/compilar.sh
 ```
 
-O script utiliza o **Tectonic**, que gerencia os pacotes automaticamente, resolve o sumário em uma única passada e gera o PDF final sem deixar arquivos temporários.
+O script utiliza o **Tectonic**, compilando automaticamente tanto o [latex/trabalho-modelagem-uml.pdf](latex/trabalho-modelagem-uml.pdf) quanto o [slides/apresentacao-aps1.pdf](slides/apresentacao-aps1.pdf) sem gerar arquivos temporários.
 
 * **Instalação do Tectonic:**
   * **macOS:** `brew install tectonic`
