@@ -674,7 +674,7 @@ end note
 
 </details>
 
-**Explicação dos elementos:**
+#### Explicação dos Elementos e Notação UML
 
 Na UML, o símbolo `+` indica visibilidade pública, `-` representa privada e `#` indica protegida. Os atributos da classe `Usuario` usam `#` (protegidos) para permitir que as subclasses os herdem e acessem diretamente; para as demais classes, o padrão é manter atributos privados e métodos públicos. Nos relacionamentos, o losango preenchido marca a composição, o triângulo vazio indica a herança e a linha simples mostra a associação.
 

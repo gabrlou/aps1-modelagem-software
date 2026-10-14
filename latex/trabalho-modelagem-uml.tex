@@ -368,7 +368,7 @@ O sistema é organizado em seis módulos complementares:
 \caption{Ciclo de vida da consulta}
 \label{qua:ciclo}
 {\footnotesize
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}X@{}}
 \toprule
 De & Evento & Para & Quem pode \\
 \midrule
@@ -486,7 +486,7 @@ valendo.
 \caption{Fluxos alternativos e de exceção do DA-01}
 \label{qua:fluxos-da01}
 {\footnotesize
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{6.8cm}>{\raggedright\arraybackslash}X@{}}
 \toprule
 Fluxo & Onde aparece no diagrama \\
 \midrule
@@ -642,7 +642,8 @@ multiplicidades e visibilidade (\texttt{+} público, \texttt{-} privado,
 \fonte{Elaborado pelos autores (2026).}
 \end{figure}
 
-\textbf{Explicação dos elementos:}
+\newpage
+\subsubsection*{Explicação dos Elementos e Notação UML}
 
 Na UML, o símbolo \texttt{+} indica visibilidade pública, \texttt{-}
 representa privada e \texttt{\#} indica protegida. Os atributos da
@@ -652,7 +653,7 @@ padrão é manter atributos privados e métodos públicos. Nos
 relacionamentos, o losango preenchido marca a composição, o triângulo
 vazio indica a herança e a linha simples mostra a associação.
 
-\textbf{Estrutura de Perfis (Herança)}
+\subsubsection*{Estrutura de Perfis (Herança)}
 
 A classe abstrata \texttt{Usuario} centraliza as informações básicas de
 identificação e autenticação (\texttt{id}, \texttt{nome}, \texttt{email},
@@ -673,7 +674,7 @@ dela, o sistema se divide em quatro perfis estritos de acesso:
   cadastro da clínica.
 \end{itemize}
 
-\textbf{Dependência de Existência (Composição)}
+\subsubsection*{Dependência de Existência (Composição)}
 
 Neste tipo de ligação estrutural, o objeto-todo governa o ciclo de vida
 das suas partes:
@@ -694,7 +695,7 @@ das suas partes:
   evento clínico.
 \end{itemize}
 
-\textbf{Vínculos Operacionais (Associações)}
+\subsubsection*{Vínculos Operacionais (Associações)}
 
 \begin{itemize}
 \tightlist
@@ -736,7 +737,7 @@ das suas partes:
   imutável e independente da conta do usuário.
 \end{itemize}
 
-\textbf{Domínios e Regras (Enumerações)}
+\subsubsection*{Domínios e Regras (Enumerações)}
 
 \begin{itemize}
 \tightlist
