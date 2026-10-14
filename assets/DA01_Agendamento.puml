@@ -1,0 +1,125 @@
+@startuml DA01_Agendamento
+title DA-01 -- Agendamento de consulta (fluxo principal, alternativos e exceções)
+
+|Paciente|
+start
+|Sistema|
+if (Sessão autenticada?) then (não)
+  |Paciente|
+  :Realizar login;
+  if (Autenticação realizada?) then (não)
+    |Sistema|
+    #FFE0E0:Encerrar sem agendamento;
+    stop
+  else (sim)
+  endif
+else (sim)
+endif
+
+|Sistema|
+:Listar especialidades ativas;
+|Paciente|
+:Selecionar especialidade;
+|Sistema|
+:Listar médicos ativos\nda especialidade;
+|Paciente|
+:Selecionar médico;
+
+repeat
+  |Sistema|
+  :Exibir horários disponíveis\n(expediente, livres, até 90 dias);
+  if (Há horários disponíveis?) then (não)
+    :Sugerir próximos dias\ncom vagas;
+    |Paciente|
+    if (Escolhe outro período\nou outro médico?) then (não)
+      #FFE0E0:Desistir do agendamento;
+      stop
+    else (sim)
+    endif
+  else (sim)
+    |Paciente|
+    :Selecionar data e horário;
+    |Sistema|
+    if (Horário dentro da\njanela permitida?) then (não)
+      #FFE0E0:Bloquear seleção e\ninformar a restrição;
+    else (sim)
+      repeat
+        |Sistema|
+        :Exibir resumo da consulta;
+        |Paciente|
+        if (Paciente confirma?) then (não)
+          #FFE0E0:Desistir do agendamento;
+          stop
+        else (sim)
+        endif
+        |Sistema|
+        if (Sessão ainda válida?) then (não)
+          |Paciente|
+          :Realizar login novamente;
+          if (Autenticação realizada?) then (não)
+            |Sistema|
+            #FFE0E0:Encerrar sem agendamento;
+            stop
+          else (sim)
+          endif
+        else (sim)
+        endif
+      repeat while (Sessão havia expirado?) is (sim) not (não)
+      |Sistema|
+      :Reservar o horário com\nlock atômico (ocupar slot);
+      if (Slot ainda disponível?) then (não)
+        #FFE0E0:Informar: "Este horário\nacabou de ser ocupado";
+      else (sim)
+        :Gravar consulta AGENDADA e marcar\nhorário OCUPADO (mesma transação);
+        if (Persistência bem-sucedida?) then (não)
+          #FFE0E0:Executar rollback total\n(horário volta a LIVRE);
+          #FFE0E0:Exibir mensagem de erro;
+          stop
+        else (sim)
+        endif
+      endif
+    endif
+  endif
+repeat while (Reserva ainda não concluída?) is (sim) not (não)
+
+|Sistema|
+:Registrar auditoria CONSULTA_CRIADA;
+:Registrar eventos AGENDAMENTO na fila\n(um por canal: e-mail e WhatsApp);
+fork
+  :Exibir comprovante com\ncódigo da consulta;
+  |Paciente|
+  :Visualizar comprovante;
+fork again
+  |Sistema de Notificação|
+  fork
+    repeat
+      :Enviar mensagem\npor e-mail;
+    backward:Aguardar (backoff);
+    repeat while (Falha no envio e\ntentativas < 3?) is (sim) not (não)
+    if (Entrega confirmada?) then (sim)
+      :Registrar notificação\nde e-mail ENVIADA;
+    else (não)
+      #FFE0E0:Registrar notificação\nde e-mail FALHOU;
+    endif
+  fork again
+    repeat
+      :Enviar mensagem\npor WhatsApp;
+    backward:Aguardar (backoff);
+    repeat while (Falha no envio e\ntentativas < 3?) is (sim) not (não)
+    if (Entrega confirmada?) then (sim)
+      :Registrar notificação\nde WhatsApp ENVIADA;
+    else (não)
+      #FFE0E0:Registrar notificação\nde WhatsApp FALHOU;
+    endif
+  end fork
+end fork
+stop
+
+legend right
+  Rosa: fluxo alternativo ou de exceção
+  Fork/join externo: o comprovante não espera o envio das notificações
+  Fork/join interno: e-mail e WhatsApp são enviados em paralelo,
+  cada canal com suas tentativas; a falha de um não afeta o outro
+  nem a consulta, que continua AGENDADA
+endlegend
+@enduml

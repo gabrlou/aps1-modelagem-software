@@ -1,0 +1,125 @@
+@startuml DS01_Agendamento
+title DS-01 -- Agendamento de consulta (fluxo completo)
+autonumber
+actor Paciente
+participant "Sistema" as S
+participant "Agenda" as AG
+participant "Horario" as H
+participant "Auditoria" as AUD
+actor "Sistema de Notificação" as SN <<system>>
+
+Paciente -> S : iniciarAgendamento()
+activate S
+S --> Paciente : especialidadesAtivas
+
+Paciente -> S : selecionarEspecialidade(idEspecialidade)
+S --> Paciente : médicosAtivos(idEspecialidade)
+
+Paciente -> S : selecionarMedico(idMedico)
+S -> AG : getHorariosDisponiveis(intervalo)
+activate AG
+loop para cada slot do intervalo (até 90 dias)
+  AG -> H : estaDisponivel()
+  activate H
+  H --> AG : true ou false
+  deactivate H
+end
+AG --> S : horáriosLivres
+deactivate AG
+
+alt nenhum horário disponível (A1)
+  S --> Paciente : sugerirProximosDiasComVagas()
+  note over Paciente, S
+    O paciente escolhe outro período ou outro médico
+    (volta à consulta de horários) ou desiste (fim sem agendamento)
+  end note
+else existem horários disponíveis
+  S --> Paciente : exibirHorarios(horáriosLivres)
+  Paciente -> S : selecionarHorario(idHorario)
+
+  alt horário fora da janela permitida (E3)
+    S --> Paciente : bloquearSelecao(restrição)
+    note right of S : volta à lista de horários
+  else horário dentro da janela
+    S --> Paciente : exibirResumo(médico, especialidade, data, hora)
+    Paciente -> S : agendar(médico, especialidade, horário)
+    note right of S : corresponde a Paciente.agendar(...)
+
+    alt sessão expirada (E1)
+      S --> Paciente : exigirLogin()
+      note right of S : após autenticar, retoma no resumo da consulta
+    else sessão válida
+      S -> H : ocupar()
+      note right of H : operação atômica (lock do slot)
+      activate H
+
+      alt horário já ocupado (A2)
+        H --> S : HorarioIndisponivelException
+        deactivate H
+        S -> AG : getHorariosDisponiveis(intervalo)
+        activate AG
+        AG --> S : horáriosAtualizados
+        deactivate AG
+        S --> Paciente : "Este horário acabou de ser ocupado" + horáriosAtualizados
+      else horário reservado
+        H --> S : ok (situação = OCUPADO)
+        deactivate H
+
+        create Consulta
+        S -> Consulta : <<create>> (paciente, médico, especialidade, horário)
+        note right of Consulta : status inicial AGENDADA
+
+        alt falha de persistência (E2)
+          Consulta --> S : erro de gravação
+          S -> H : liberar()
+          note right of H : rollback: o horário volta a LIVRE
+          S --> Paciente : mensagem de erro (nenhuma notificação enviada)
+        else persistência bem-sucedida
+          Consulta --> S : consulta AGENDADA (código)
+          S -> AUD : registrar(CONSULTA_CRIADA)
+          create participant "Notificacao (EMAIL)" as NotifEmail
+          S -> NotifEmail : <<create>> (AGENDAMENTO, EMAIL, PENDENTE)
+          create participant "Notificacao (WHATSAPP)" as NotifWhats
+          S -> NotifWhats : <<create>> (AGENDAMENTO, WHATSAPP, PENDENTE)
+          note right of NotifWhats : um registro por canal (e-mail e WhatsApp)
+
+          par comprovante ao paciente
+            S --> Paciente : comprovante(códigoConsulta)
+          else envio assíncrono por e-mail
+            loop até 3 tentativas, com backoff entre elas
+              NotifEmail ->> SN : enviar(destinatário, EMAIL, mensagem)
+              break entrega confirmada
+                SN --> NotifEmail : confirmação de entrega
+                NotifEmail -> NotifEmail : registrarEnvio()
+                SN ->> Paciente : mensagem de agendamento por e-mail
+              end
+              SN --> NotifEmail : falha na entrega (A3)
+              NotifEmail -> NotifEmail : registrarFalha()
+            end
+            note over NotifEmail
+              Após 3 falhas o status fica FALHOU
+              neste canal; a consulta permanece AGENDADA
+            end note
+          else envio assíncrono por WhatsApp
+            loop até 3 tentativas, com backoff entre elas
+              NotifWhats ->> SN : enviar(destinatário, WHATSAPP, mensagem)
+              break entrega confirmada
+                SN --> NotifWhats : confirmação de entrega
+                NotifWhats -> NotifWhats : registrarEnvio()
+                SN ->> Paciente : mensagem de agendamento por WhatsApp
+              end
+              SN --> NotifWhats : falha na entrega (A3)
+              NotifWhats -> NotifWhats : registrarFalha()
+            end
+            note over NotifWhats
+              Após 3 falhas o status fica FALHOU
+              neste canal; o outro canal não é afetado
+            end note
+          end
+        end
+      end
+    end
+  end
+end
+deactivate S
+@enduml

@@ -13,3 +13,12 @@ ehthumbs.db
 .idea/
 *.swp
 *~
+
+# LaTeX auxiliares
+*.aux
+*.log
+*.toc
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz

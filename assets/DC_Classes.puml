@@ -1,0 +1,224 @@
+@startuml DC_Classes
+title DC -- Diagrama de Classes (nível macro)
+skinparam classAttributeIconSize 0
+hide empty members
+
+' ===== ENUMERAÇÕES =====
+
+enum Perfil {
+  PACIENTE
+  MEDICO
+  SECRETARIO
+  ADMINISTRADOR
+}
+
+enum StatusUsuario {
+  ATIVO
+  INATIVO
+  BLOQUEADO
+}
+
+enum StatusEspecialidade {
+  ATIVA
+  INATIVA
+}
+
+enum StatusConsulta {
+  AGENDADA
+  CONFIRMADA
+  EM_ANDAMENTO
+  REALIZADA
+  CANCELADA
+  REMARCADA
+  NAO_REALIZADA
+}
+
+enum SituacaoHorario {
+  LIVRE
+  BLOQUEADO
+  OCUPADO
+}
+
+enum DiaSemana {
+  SEGUNDA
+  TERCA
+  QUARTA
+  QUINTA
+  SEXTA
+  SABADO
+  DOMINGO
+}
+
+enum TipoEvento {
+  AGENDAMENTO
+  CONFIRMACAO
+  CANCELAMENTO
+  REMARCACAO
+  LEMBRETE
+}
+
+enum Canal {
+  EMAIL
+  WHATSAPP
+}
+
+enum StatusEntrega {
+  PENDENTE
+  ENVIADA
+  FALHOU
+}
+
+' ===== CLASSES =====
+
+abstract class Usuario {
+  # id: Long
+  # nome: String
+  # email: String {unique}
+  # senhaHash: String
+  # telefone: String
+  # status: StatusUsuario
+  # criadoEm: DateTime
+  + autenticar(email, senha): boolean
+  + alterarSenha(atual, nova): void
+  + getPerfil(): Perfil
+}
+
+class Paciente {
+  - cpf: String {unique}
+  - dataNascimento: Date
+  + agendar(medico, especialidade, horario): Consulta
+  + cancelar(consulta, motivo: String): void
+  + remarcar(consulta, novoHorario,\n    motivo: String): Consulta
+  + listarConsultas(): List<Consulta>
+}
+
+class Medico {
+  - crm: String {unique com ufCrm}
+  - ufCrm: String
+  + definirDisponibilidade(regra): void
+  + bloquearHorario(horario): void
+  + visualizarAgenda(periodo): List<Consulta>
+  + confirmarConsulta(consulta): void
+  + iniciarConsulta(consulta): void
+  + encerrarConsulta(consulta, status): void
+}
+
+class Secretario {
+  - matricula: String
+  + confirmarConsulta(consulta): void
+  + visualizarAgendaGeral(filtro): List<Consulta>
+  + criarConsultaEmNomeDoPaciente(paciente, medico,\n    especialidade, horario): Consulta
+  + cancelarConsulta(consulta, motivo: String): void
+  + remarcarConsulta(consulta, novoHorario,\n    motivo: String): Consulta
+}
+
+class Administrador {
+  + cadastrarMedico(dados): Medico
+  + cadastrarSecretario(dados): Secretario
+  + gerenciarEspecialidade(dados): Especialidade
+}
+
+class Especialidade {
+  - id: Long
+  - nome: String {unique}
+  - descricao: String
+  - status: StatusEspecialidade
+  + ativar(): void
+  + desativar(): void
+}
+
+class Agenda {
+  - id: Long
+  - diasAtendimento: Set<DiaSemana>
+  - horaInicio: Time
+  - horaFim: Time
+  - duracaoSlot: Duration
+  - antecedenciaMinima: Duration
+  + gerarHorarios(data): List<Horario>
+  + getHorariosDisponiveis(intervalo): List<Horario>
+  + atualizarRegra(regra): void
+}
+
+class Horario {
+  - id: Long
+  - data: Date
+  - horaInicio: Time
+  - horaFim: Time
+  - situacao: SituacaoHorario
+  + estaDisponivel(): boolean
+  + bloquear(motivo): void
+  + liberar(): void
+  + ocupar(): void
+}
+
+class Consulta {
+  - id: Long
+  - dataHora: DateTime
+  - status: StatusConsulta
+  - motivoCancelamento: String
+  - confirmadaEm: DateTime
+  - canceladaEm: DateTime
+  - criadoEm: DateTime
+  - atualizadoEm: DateTime
+  + confirmar(por: Usuario): void
+  + cancelar(por: Usuario, motivo: String): void
+  + remarcar(novoHorario: Horario,\n    motivo: String): Consulta
+  + iniciar(): void
+  + encerrar(status): void
+  + podeSerAlterada(): boolean
+}
+
+class Notificacao {
+  - id: Long
+  - evento: TipoEvento
+  - canal: Canal
+  - destinatario: String
+  - enviadoEm: DateTime
+  - statusEntrega: StatusEntrega
+  - tentativas: int
+  + registrarEnvio(): void
+  + registrarFalha(): void
+}
+
+class Auditoria {
+  - id: Long
+  - perfil: Perfil
+  - acao: String
+  - entidade: String
+  - entidadeId: Long
+  - dataHora: DateTime
+  - ip: String
+  - userAgent: String
+  + registrar(evento): void
+}
+
+' ===== RELACIONAMENTOS =====
+
+' Generalização
+Usuario <|-- Paciente
+Usuario <|-- Medico
+Usuario <|-- Secretario
+Usuario <|-- Administrador
+
+' Composição (o todo governa o ciclo de vida das partes)
+Medico "1" *-- "1" Agenda : possui >
+Agenda "1" *-- "1..*" Horario : gera >
+Consulta "1" *-- "0..*" Notificacao : gera >
+
+' Associações
+Medico "0..*" -- "1..*" Especialidade : atende >
+Horario "1" -- "0..*" Consulta : ocupa <
+Paciente "1" -- "0..*" Consulta : titular de >
+Medico "1" -- "0..*" Consulta : atende >
+Especialidade "1" -- "0..*" Consulta : classifica >
+Consulta "0..1" -- "0..1" Consulta : remarcadaDe >
+Consulta "0..*" -- "0..1" Usuario : confirmadaPor >
+Consulta "0..*" -- "0..1" Usuario : canceladaPor >
+Usuario "1" -- "0..*" Auditoria : registra >
+
+note bottom of Horario
+  Histórico: várias consultas ao longo do tempo,
+  no máximo 1 ativa
+end note
+
+@enduml

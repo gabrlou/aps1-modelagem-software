@@ -42,7 +42,7 @@ Temos como objetivo principal dar autonomia ao usuário para que ele consiga, a 
 
 Processos manuais em clínicas costumam gerar sobrecarga na recepção, marcações duplas no mesmo horário e alto índice de faltas pela falta de lembretes práticos. Além disso, controles em planilhas ou papel dificultam o remanejamento rápido de horários cancelados e não oferecem histórico confiável para auditoria.
 
-O sistema resolve esses problemas ao centralizar as agendas em uma base única, aplicando validação em tempo real e bloqueio de horários para impedir conflitos entre pacientes que desejam um mesmo horário. Para reduzir as faltas, a aplicação envia confirmações e lembretes simultaneamente por e-mail e WhatsApp, os dois canais mais usados no dia a dia. Além disso, todas as ações críticas (agendamentos, confirmações, cancelamentos e remarcações com motivo obrigatório e alterações de grade) geram registros de auditoria com autor, data/hora, IP e navegador, apoiando a rastreabilidade e a conformidade com a LGPD. A guarda do motivo de cada cancelamento ou remarcação forma um histórico que ajuda a clínica a entender por que os horários são liberados.
+O sistema resolve esses problemas ao centralizar as agendas em uma base única, aplicando validação em tempo real e bloqueio de horários para impedir conflitos entre pacientes que desejam um mesmo horário. Para reduzir as faltas, a aplicação envia confirmações e lembretes simultaneamente por e-mail e WhatsApp, os dois canais mais usados no dia a dia. Além disso, todas as ações críticas (agendamentos, confirmações, cancelamentos e remarcações com motivo obrigatório e alterações de grade) geram registros de auditoria com autor, data/hora, IP e navegador, apoiando a rastreabilidade e a conformidade com a LGPD. Ao armazenar o motivo de cada cancelamento ou remarcação, cria-se um histórico que ajuda a clínica a entender por que os horários são liberados.
 
 ### 1.3 Atores do Sistema
 
@@ -61,7 +61,7 @@ O sistema é organizado em seis módulos complementares:
 - **Módulo de Cadastro e Autenticação:** responsável pelo gerenciamento e pela autenticação de todos os usuários da clínica e pacientes. Exige e-mail único para todos e CPF único para pacientes. Médicos são cadastrados pelo par CRM/UF, dados únicos nacionalmente. Os perfis de acesso são exclusivos (`PACIENTE`, `MEDICO`, `SECRETARIO`, `ADMINISTRADOR`). Pacientes se cadastram sozinhos; médicos e secretários são cadastrados pelo administrador. As senhas são armazenadas sob hash criptográfico, com bloqueio temporário após sucessivas tentativas incorretas.
 - **Módulo de Consulta de Médicos e Especialidades:** o administrador gerencia a lista de especialidades (apenas ativas aceitam novos agendamentos). Permite a busca pública de especialidades e a filtragem de médicos ativos vinculados a cada catálogo.
 - **Módulo de Agenda do Médico:** organiza a grade do profissional em intervalos de **30 minutos por padrão**, configuráveis pelo médico em blocos de 30 minutos, sem sobreposição. Cada intervalo possui estado bem definido (`LIVRE`, `BLOQUEADO` ou `OCUPADO`). Os horários ficam disponíveis para reserva dentro do expediente do médico, respeitando uma antecedência mínima configurável e um limite máximo de até 90 dias no futuro. Permite ao médico aplicar bloqueios operacionais pontuais.
-- **Módulo de Agendamento:** guia o paciente em quatro passos (especialidade, médico, data/horário e confirmação do resumo) e centraliza todo o ciclo da reserva. Ao confirmar, o sistema reserva o horário com trava atômica para impedir marcações concorrentes no mesmo slot e grava a consulta como `AGENDADA`. Abrange também o histórico de consultas e as operações de **cancelamento e remarcação** (pelo paciente titular ou pelo secretário): ambas exigem antecedência mínima de 2 horas (bloqueando a ação no sistema caso falte menos de 2h) e **motivo obrigatório**. No cancelamento, o slot volta imediatamente a `LIVRE`. A remarcação mantém o mesmo médico, cancelando a consulta antiga, ocupando o novo horário e criando uma nova consulta `AGENDADA` com reversão automática em caso de falha.
+- **Módulo de Agendamento:** guia o paciente em quatro passos (especialidade, médico, data/horário e confirmação do resumo) e centraliza todo o ciclo da reserva. Ao confirmar, o sistema reserva o horário utilizando trava atômica (bloqueio exclusivo no banco de dados) para impedir marcações concorrentes no mesmo slot e grava a consulta como `AGENDADA`. Abrange também o histórico de consultas e as operações de **cancelamento e remarcação** (pelo paciente titular ou pelo secretário): ambas exigem antecedência mínima de 2 horas (bloqueando a ação no sistema caso falte menos de 2 h) e **motivo obrigatório**. No cancelamento, o slot volta imediatamente a `LIVRE`. A remarcação mantém o mesmo médico, cancelando a consulta antiga, ocupando o novo horário e criando uma nova consulta `AGENDADA` com reversão automática em caso de falha.
 - **Módulo de Confirmação (Secretário):** apoia a rotina da recepção através de uma visão centralizada das consultas pendentes de confirmação. Permite o contato proativo com os pacientes presenciais ou telefônicos e o registro de confirmações (transicionando a consulta para `CONFIRMADA`) ou recusas, gravando autor e data da confirmação. A confirmação é **opcional**, permitindo que o médico inicie o atendimento mesmo que a consulta permaneça com status `AGENDADA`.
 - **Módulo de Notificação:** funciona em segundo plano, disparando avisos assíncronos e em paralelo por e-mail e WhatsApp nos eventos de agendamento, confirmação, cancelamento, remarcação e lembrete prévio de 24 horas. Cada canal possui registro próprio de entrega com fila de até 3 tentativas e backoff. Uma falha de entrega não cancela a consulta nem interrompe o fluxo do usuário. Os eventos críticos do sistema são registrados em log imutável de auditoria com rastreabilidade de autor, data/hora e IP.
 
@@ -434,11 +434,11 @@ A tabela abaixo mapeia cada fluxo alternativo (A) e de exceção (E) às mensage
 
 ## 4. Diagrama de Classes — Nível Macro
 
-### 4.1 Objetivo
+O diagrama de classes estrutura a visão estática do domínio com 11 classes e 9 enumerações, mapeando os relacionamentos essenciais, a visibilidade dos membros e as regras de multiplicidade para guiar a implementação.
 
-Apresentar a estrutura orientada a objetos do sistema: classes principais, atributos tipados, métodos essenciais, enumerações e relacionamentos (herança, associação, composição e autorrelação), com multiplicidades e visibilidade (`+` público, `-` privado, `#` protegido).
+### 4.1 DC — Diagrama de Classes (Nível Macro)
 
-### 4.2 Diagrama e Código PlantUML
+**Objetivo:** apresentar a estrutura orientada a objetos do sistema: classes principais, atributos tipados, métodos essenciais, enumerações e relacionamentos (herança, associação e composição), com multiplicidades e visibilidade (`+` público, `-` privado, `#` protegido).
 
 ![Diagrama de classes (nível macro)](assets/DC_Classes.svg)
 
@@ -674,39 +674,49 @@ end note
 
 </details>
 
-### 4.3 Explicação
+**Explicação dos elementos:**
 
-**Notação:** `+` indica visibilidade pública, `-` privada e `#` protegida. Os atributos de `Usuario` são protegidos (`#`), pois as subclasses os herdam e os usam; nas demais classes os atributos são privados e os métodos, públicos. O losango preenchido (`*--`) indica composição, o triângulo vazio indica herança e a linha simples indica associação.
+Na UML, o símbolo `+` indica visibilidade pública, `-` representa privada e `#` indica protegida. Os atributos da classe `Usuario` usam `#` (protegidos) para permitir que as subclasses os herdem e acessem diretamente; para as demais classes, o padrão é manter atributos privados e métodos públicos. Nos relacionamentos, o losango preenchido marca a composição, o triângulo vazio indica a herança e a linha simples mostra a associação.
 
-**Estrutura de herança:** a classe abstrata `Usuario` concentra os atributos comuns de identificação e autenticação (`id`, `nome`, `email`, `senhaHash`, `telefone`, `status`, `criadoEm`) e os métodos de segurança. As quatro especializações — `Paciente`, `Medico`, `Secretario` e `Administrador` — herdam de `Usuario` e introduzem seus campos e operações próprios (`cpf` para pacientes, par `crm`/`ufCrm` para médicos, `matricula` para secretários e as operações de cadastro do administrador). Os perfis de acesso são mutuamente exclusivos.
+#### Estrutura de Perfis (Herança)
 
-**Composições (o todo governa o ciclo de vida das partes):**
+A classe abstrata `Usuario` centraliza as informações básicas de identificação e autenticação (`id`, `nome`, `email`, `senhaHash`, `telefone`, `status` e `criadoEm`), além de conter os métodos de segurança. A partir dela, o sistema se divide em quatro perfis estritos de acesso:
 
-- **Medico – Agenda (1:1):** cada médico detém sua própria agenda, que não existe sem ele.
-- **Agenda – Horario (1:1..\*):** a agenda divide o expediente em slots; os slots não existem desvinculados de sua agenda.
-- **Consulta – Notificacao (1:0..\*):** as notificações pertencem à consulta que as originou (uma por evento, destinatário e canal).
+- **Paciente:** adiciona o atributo `cpf` ao cadastro.
+- **Medico:** exige as credenciais de `crm` e `ufCrm`.
+- **Secretario:** inclui o atributo `matricula`.
+- **Administrador:** agrupa as operações exclusivas de gestão e cadastro da clínica.
 
-**Associações:**
+#### Dependência de Existência (Composição)
 
-- **Medico – Especialidade (0..\*:1..\*):** um médico atende uma ou mais especialidades, e uma especialidade pode ter vários médicos.
-- **Horario – Consulta (1:0..\*):** ao longo do tempo, um mesmo horário acumula várias consultas (por exemplo, uma cancelada e outra que o ocupou depois), mas **no máximo uma ativa**. A multiplicidade `1:0..1` seria incorreta, porque cancelar e remarcar mantêm a consulta antiga como histórico.
-- **Paciente – Consulta e Medico – Consulta (1:0..\*):** o paciente titular e o médico responsável por cada consulta.
-- **Especialidade – Consulta (1:0..\*):** a consulta guarda a especialidade escolhida no agendamento, já que um médico atende várias.
-- **Consulta – Consulta (0..1:0..1, `remarcadaDe`):** associação reflexiva que liga a consulta remarcada à nova consulta.
-- **Consulta – Usuario (0..\*:0..1, `confirmadaPor` e `canceladaPor`):** registra quem confirmou e quem cancelou. Junto com `confirmadaEm`, `canceladaEm` e `motivoCancelamento` (obrigatório ao cancelar ou remarcar), forma o histórico de quem fez cada alteração e por quê.
-- **Usuario – Auditoria (1:0..\*):** associação simples, pois o registro de auditoria deve sobreviver ao usuário.
+Neste tipo de ligação estrutural, o objeto-todo governa o ciclo de vida das suas partes:
 
-**Enumerações tipadas:**
+- **Medico – Agenda (1:1):** todo médico possui uma agenda única, que perde o sentido e deixa de existir caso o profissional seja desvinculado.
+- **Agenda – Horario (1:1..*):** a agenda fragmenta o expediente em slots de atendimento; sem a agenda matriz, esses horários não existem de forma autônoma.
+- **Consulta – Notificacao (1:0..*):** as mensagens pertencem à consulta que as originou, mantendo o registro de envios atrelado ao evento clínico.
 
-- `Perfil`: os quatro perfis de acesso (`PACIENTE`, `MEDICO`, `SECRETARIO`, `ADMINISTRADOR`).
-- `StatusUsuario`: estado cadastral da conta (`ATIVO`, `INATIVO`, `BLOQUEADO`).
-- `StatusEspecialidade`: estado do catálogo (`ATIVA`, `INATIVA`), separado do status de usuário.
-- `StatusConsulta`: ciclo de vida do atendimento (`AGENDADA`, `CONFIRMADA`, `EM_ANDAMENTO`, `REALIZADA`, `CANCELADA`, `REMARCADA`, `NAO_REALIZADA`).
-- `SituacaoHorario`: estado de cada vaga (`LIVRE`, `BLOQUEADO`, `OCUPADO`).
-- `DiaSemana`: dias de atendimento da agenda.
-- `TipoEvento`: gatilhos de comunicação (`AGENDAMENTO`, `CONFIRMACAO`, `CANCELAMENTO`, `REMARCACAO`, `LEMBRETE`).
-- `Canal`: canais de mensagem (`EMAIL`, `WHATSAPP`).
-- `StatusEntrega`: ciclo de entrega de cada mensagem (`PENDENTE`, `ENVIADA`, `FALHOU`).
+#### Vínculos Operacionais (Associações)
+
+- **Medico – Especialidade (0..*:1..*):** um médico atende a uma ou múltiplas especialidades, e uma especialidade pode ter vários médicos vinculados.
+- **Horario – Consulta (1:0..*):** um mesmo horário retém o histórico de todas as consultas que passaram por ele ao longo do tempo (como uma consulta cancelada que cedeu espaço para outra), mas admite no máximo uma ativa por vez.
+- **Paciente – Consulta (1:0..*):** cada consulta pertence obrigatoriamente a exatamente um paciente titular, enquanto o paciente acumula o histórico de seus agendamentos.
+- **Medico – Consulta (1:0..*):** cada consulta é conduzida por exatamente um médico responsável, enquanto o médico atende a diversas consultas na clínica.
+- **Especialidade – Consulta (1:0..*):** fixa qual especialidade foi selecionada no momento da marcação, já que o médico pode atuar em mais de uma.
+- **Consulta – Consulta (0..1:0..1, `remarcadaDe`):** associação reflexiva na qual a nova consulta aponta para a consulta anterior cancelada, sendo opcional (`0..1`) pois agendamentos comuns não derivam de outra.
+- **Consulta – Usuario (0..*:0..1, `confirmadaPor` e `canceladaPor`):** identifica qual operador executou as ações. Cruzando isso com `confirmadaEm`, `canceladaEm` e `motivoCancelamento`, obtém-se a rastreabilidade completa do ciclo de vida da consulta.
+- **Usuario – Auditoria (1:0..*):** associação simples (e não composição) para assegurar que os logs de auditoria sobrevivam de forma imutável e independente da conta do usuário.
+
+#### Domínios e Regras (Enumerações)
+
+- `Perfil`: trava as contas em `PACIENTE`, `MEDICO`, `SECRETARIO` ou `ADMINISTRADOR`.
+- `StatusUsuario`: restringe a situação cadastral a `ATIVO`, `INATIVO` ou `BLOQUEADO`.
+- `StatusEspecialidade`: chaveia a disponibilidade no catálogo entre `ATIVA` ou `INATIVA`.
+- `StatusConsulta`: mapeia o ciclo de atendimento em `AGENDADA`, `CONFIRMADA`, `EM_ANDAMENTO`, `REALIZADA`, `CANCELADA`, `REMARCADA` ou `NAO_REALIZADA`.
+- `SituacaoHorario`: controla o estado de cada vaga da grade como `LIVRE`, `BLOQUEADO` ou `OCUPADO`.
+- `DiaSemana`: parametriza os dias de atendimento configurados na agenda do médico.
+- `TipoEvento`: filtra os gatilhos de comunicação em `AGENDAMENTO`, `CONFIRMACAO`, `CANCELAMENTO`, `REMARCACAO` ou `LEMBRETE`.
+- `Canal`: limita os disparos de notificação a `EMAIL` ou `WHATSAPP`.
+- `StatusEntrega`: sinaliza o resultado do envio via `PENDENTE`, `ENVIADA` ou `FALHOU`.
 
 ---
 
@@ -720,10 +730,19 @@ O **diagrama de sequência** (DS-01) mostra, no mesmo cenário, a troca de mensa
 
 O **diagrama de classes** estrutura a visão estática do domínio com 11 classes e 9 enumerações, relacionamentos de herança, composição e associação com multiplicidades, e indica a visibilidade dos atributos e métodos.
 
-Todos os diagramas foram revisados para garantir que estivessem coerentes entre si. Dessa revisão resultaram decisões que tornaram o modelo mais fiel às regras de negócio, como a multiplicidade entre `Horario` e `Consulta`, o registro
- de quem confirmou e quem cancelou, a reserva atômica do horário e a separação entre o comprovante e o envio da notificação.
+Todos os diagramas foram revisados para garantir que estivessem coerentes entre si. Dessa revisão resultaram decisões que tornaram o modelo mais fiel às regras de negócio, como a multiplicidade entre `Horario` e `Consulta`, o registro de quem confirmou e quem cancelou, a reserva atômica do horário e a separação entre o comprovante e o envio da notificação.
 
 **Limitações e próximos passos:** a remarcação, a confirmação pelo secretário e o cancelamento estão descritos em texto (seções 1.4 e 1.5), mas não têm diagrama próprio, porque o DA-01 e o DS-01 já cobrem o que foi pedido. Se houver evolução do trabalho, esses cenários são os candidatos naturais a novos diagramas (por exemplo, o cancelamento com bloqueio da janela de 2 horas).
+
+---
+
+## Referências
+
+- FOWLER, Martin. **UML essencial**: um breve guia para a linguagem-padrão de modelagem de objetos. 3. ed. Porto Alegre: Bookman, 2005.
+- OBJECT MANAGEMENT GROUP (OMG). **OMG Unified Modeling Language (OMG UML)**: Superstructure, Version 2.5.1. Needham: OMG, 2017. Disponível em: <https://www.omg.org/spec/UML/2.5.1/>. Acesso em: 8 out. 2026.
+- PLANTUML. **PlantUML Language Reference Guide**. 2024. Disponível em: <https://plantuml.com/guide>. Acesso em: 8 out. 2026.
+- PRESSMAN, Roger S.; MAXIM, Bruce R. **Engenharia de software**: uma abordagem profissional. 8. ed. Porto Alegre: AMGH, 2016.
+- SOMMERVILLE, Ian. **Engenharia de software**. 10. ed. São Paulo: Pearson Education do Brasil, 2019.
 
 ---
 

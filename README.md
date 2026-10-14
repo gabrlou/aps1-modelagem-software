@@ -34,7 +34,9 @@
 
 Este repositório contém a especificação de requisitos e os artefatos de modelagem UML (Diagramas de Atividades, Sequência e Classes) desenvolvidos para a **APS 1** da disciplina de Modelagem de Software.
 
-O objetivo deste documento é orientar a estrutura de arquivos e facilitar o acesso aos entregáveis do projeto.
+O projeto disponibiliza duas versões integradas do trabalho:
+1. **Documento em Markdown ([trabalho-modelagem-uml.md](trabalho-modelagem-uml.md)):** versão navegável diretamente pelo GitHub.
+2. **Relatório Acadêmico ABNT ([latex/trabalho-modelagem-uml.pdf](latex/trabalho-modelagem-uml.pdf)):** versão tipográfica oficial diagramada em LaTeX conforme as normas NBR 14724, NBR 6024 e NBR 6027.
 
 ---
 
@@ -42,47 +44,64 @@ O objetivo deste documento é orientar a estrutura de arquivos e facilitar o ace
 
 ```text
 aps1-modelagem-software/
-├── assets/                               # Diagramas compilados em formato vetorial SVG
-│   ├── DA01_Agendamento.svg              # Diagrama de Atividades (Agendamento de Consulta)
-│   ├── DS01_Agendamento.svg              # Diagrama de Sequência (Agendamento de Consulta)
-│   └── DC_Classes.svg                    # Diagrama de Classes (Nível Macro)
-├── docs/                                 # Documentação complementar de apoio
-│   ├── especificacao-requisitos.md       # Engenharia de requisitos detalhada (RF, RNF, RN e fluxos)
-│   └── instrucao-inicial.md              # Enunciado e critérios pedagógicos da atividade
-├── scripts/                              # Utilitários de automação
-│   └── renderizar-diagramas.js           # Script Node.js para compilar PlantUML em SVG
-├── .gitignore                            # Configuração de arquivos ignorados pelo Git
-├── README.md                             # Guia do repositório e navegação
-└── trabalho-modelagem-uml.md             # Documento principal de entrega
+├── assets/
+│   ├── DA01_Agendamento.pdf
+│   ├── DA01_Agendamento.puml
+│   ├── DA01_Agendamento.svg
+│   ├── DC_Classes.pdf
+│   ├── DC_Classes.puml
+│   ├── DC_Classes.svg
+│   ├── DS01_Agendamento.pdf
+│   ├── DS01_Agendamento.puml
+│   └── DS01_Agendamento.svg
+├── docs/
+│   ├── especificacao-requisitos.md
+│   └── instrucao-inicial.md
+├── latex/
+│   ├── trabalho-modelagem-uml.pdf
+│   └── trabalho-modelagem-uml.tex
+├── scripts/
+│   ├── compilar.sh
+│   └── renderizar-diagramas.js
+├── .gitignore
+├── README.md
+└── trabalho-modelagem-uml.md
 ```
 
 ---
 
 ## 🧭 Guia de Navegação
 
-- 📄 **Documento Principal de Entrega:**<br>
-  Acesse [trabalho-modelagem-uml.md](trabalho-modelagem-uml.md) para consultar o trabalho completo consolidado, incluindo capa, descrição da aplicação, módulos do sistema, ciclo de vida da consulta, códigos PlantUML com justificativas técnicas, análise de consistência e apêndices normativos.
-
-- 📋 **Especificação Completa de Requisitos:**<br>
-  Acesse [docs/especificacao-requisitos.md](docs/especificacao-requisitos.md) para consultar os 21 Requisitos Funcionais (`RF-01` a `RF-21`), 23 Não-Funcionais (`RNF-01` a `RNF-23`), 28 Regras de Negócio (`RN-01` a `RN-28`) e o detalhamento dos 5 fluxos operacionais.
-
-- 📖 **Diretrizes da Atividade:**<br>
-  Acesse [docs/instrucao-inicial.md](docs/instrucao-inicial.md) para visualizar o enunciado oficial e as orientações fornecidas pelo professor.
-
-- 🖼️ **Visualização Direta dos Diagramas:**<br>
-  Os arquivos vetoriais estão disponíveis no diretório [assets/](assets/):
-  - [DA-01 — Diagrama de Atividades](assets/DA01_Agendamento.svg)
-  - [DS-01 — Diagrama de Sequência](assets/DS01_Agendamento.svg)
-  - [DC — Diagrama de Classes](assets/DC_Classes.svg)
+- 📑 **[latex/trabalho-modelagem-uml.pdf](latex/trabalho-modelagem-uml.pdf):** Relatório oficial compilado em formato ABNT (NBR 14724 / NBR 6023).
+- 📄 **[trabalho-modelagem-uml.md](trabalho-modelagem-uml.md):** Documentação completa consolidada para navegação no GitHub.
+- 📋 **[docs/especificacao-requisitos.md](docs/especificacao-requisitos.md):** Engenharia de requisitos detalhada (RF, RNF, RN e fluxos operacionais).
+- 📖 **[docs/instrucao-inicial.md](docs/instrucao-inicial.md):** Enunciado oficial e diretrizes da atividade.
+- 🖼️ **[assets/](assets/):** Diagramas renderizados em SVG/PDF e fontes PlantUML (`DA-01`, `DS-01` e `DC`).
 
 ---
 
-## ⚙️ Renderização dos Diagramas
+## 🛠️ Como Compilar o PDF Oficial
 
-Os diagramas são mantidos em formato PlantUML dentro de [trabalho-modelagem-uml.md](trabalho-modelagem-uml.md). Para regerar os arquivos SVG:
+Para compilar o relatório acadêmico e atualizar o [latex/trabalho-modelagem-uml.pdf](latex/trabalho-modelagem-uml.pdf), basta executar o script unificado na raiz do projeto:
 
-1. **Requisitos:** Node.js (v16+), Java, Graphviz (`dot`) e PlantUML.
-2. **Execução:**
-   ```bash
-   node scripts/renderizar-diagramas.js
-   ```
+```bash
+./scripts/compilar.sh
+```
+
+O script utiliza o **Tectonic**, que gerencia os pacotes automaticamente, resolve o sumário em uma única passada e gera o PDF final sem deixar arquivos temporários.
+
+* **Instalação do Tectonic:**
+  * **macOS:** `brew install tectonic`
+  * **Linux / Windows:** [tectonic-typesetting.github.io](https://tectonic-typesetting.github.io/)
+
+> **Compilação no Overleaf:** Se preferir compilar na nuvem, basta fazer upload das pastas `latex/` e `assets/`. O compilador padrão compila o documento diretamente.
+
+---
+
+## ⚙️ Atualização dos Diagramas (Opcional)
+
+Todos os diagramas já se encontram compilados e prontos em [assets/](assets/). Caso precise alterar algum código PlantUML no futuro e regerar os SVGs:
+
+```bash
+node scripts/renderizar-diagramas.js
+```
