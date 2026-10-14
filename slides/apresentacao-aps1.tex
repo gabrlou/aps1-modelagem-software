@@ -5,424 +5,683 @@
 \usepackage{tabularx}
 \usepackage{listings}
 \usepackage{graphicx}
+\usepackage{tikz}
 
 \usetheme{Ufg}
-\usetikzlibrary{positioning}
 
-\graphicspath{{../assets/}{assets/}{figs/}}
+\graphicspath{{figs/diagrams/}{../assets/}{assets/}{figs/}}
 
 \setbeamertemplate{caption}[numbered]
+\setbeamersize{text margin left=0.05\textwidth, text margin right=0.05\textwidth}
 
+% Layout limpo para slides de conteudo (area util maxima 16:9)
+\newcommand{\setLayoutClean}{%
+    \usebackgroundtemplate{}%
+    \setDefaultConfig%
+}
+
+% Macro para slides de diagramas centralizados e com zoom maximo
+\newcommand{\slideDiagrama}[2]{%
+    \begin{frame}[plain]
+        \vspace{0.12cm}%
+        \centering
+        {\normalsize\sffamily\bfseries\color{UFGBlue} #1}\par\vspace{0.08cm}%
+        \vfill
+        \makebox[\textwidth][c]{\includegraphics[width=0.96\paperwidth,height=0.87\paperheight,keepaspectratio]{#2}}%
+        \vfill
+    \end{frame}%
+}
+
+% Transicoes de secao unificadas com azul institucional UFG
 \AtBeginSection[]{%
     \setLayout{mainpoint}%
-    \setBGColor{\currentsectioncolor}%
+    \setBGColor{UFGBlue}%
     \begin{frame}[noframenumbering]{}%
-        \frametitle{\insertsectionhead}%
+        \frametitle{\LARGE\insertsectionhead}%
     \end{frame}%
-    \setLayout{vertical}%
+    \setLayoutClean%
 }
 
 \setPrimaryColor{UFGBlue}
 \setLogos{lib/logos/INF-compact-white.png}{lib/logos/INF-compact-white.png}
 
-\title[Sistema de Agendamento --- APS 1]{Sistema de Agendamento de Consultas Médicas}
-\subtitle{Modelagem de Software --- APS 1 (Especificação UML)}
+\title[Sistema de Agendamento --- APS1]{Sistema de Agendamento de Consultas Médicas}
+\subtitle{Modelagem de Software --- APS1}
 \author[Grupo 5]{%
-  Carlos Eduardo Freire \and Gabriel Henrique Lourenço \and Kayque Vicente Silva\\
-  Luiz Pedro Pereira Mendes \and Yury Nogueira de Oliveira%
+  Carlos Eduardo Freire da Silva \and Gabriel Henrique Lourenço Dias \and Kayque Vicente Silva\\
+  Luiz Pedro Pereira Mendes Saraiva \and Yury Nogueira de Oliveira Silva%
 }
 \institute[UFG/INF]{%
   Instituto de Informática (INF) --- Universidade Federal de Goiás (UFG)\\
-  Bacharelado em Engenharia de Software --- Docente: Me. Diogo Oliveira Santos%
+  Bacharelado em Engenharia de Software --- Prof. Me. Diogo Oliveira Santos%
 }
 \date{2026/2}
 
 \begin{document}
 
-% Slide 1: Capa
+% =========================================================
+% Slide 1: Capa Formal
+% =========================================================
+\setLayout{titlepage}
 \frame[noframenumbering]{\titlepage}
 
-% Slide 2: Identificação do Grupo e Contexto
-\setLayout{horizontal}
-\begin{frame}{Identificação Acadêmica e Equipe}
-    \begin{columns}
-        \column{0.52\textwidth}
-        \textbf{Contexto da Atividade:}
-        \begin{itemize}
-            \item \textbf{Disciplina:} Modelagem de Software (APS 1)
-            \item \textbf{Instituição:} Instituto de Informática (INF / UFG)
-            \item \textbf{Curso:} Bacharelado em Engenharia de Software
-            \item \textbf{Docente:} Me. Diogo Oliveira Santos
-            \item \textbf{Semestre Letivo:} 2026/2
-        \end{itemize}
-
-        \column{0.48\textwidth}
-        \textbf{Integrantes do Grupo:}
-        \begin{itemize}
-            \item Carlos Eduardo Freire da Silva
-            \item Gabriel Henrique Lourenço Dias
-            \item Kayque Vicente Silva
-            \item Luiz Pedro Pereira Mendes Saraiva
-            \item Yury Nogueira de Oliveira Silva
-        \end{itemize}
-    \end{columns}
-\end{frame}
-
-% Slide 3: Agenda
-\setLayout{vertical}
-\begin{frame}{Agenda da Apresentação}
+% =========================================================
+% Slide 2: Sumario da Apresentacao
+% =========================================================
+\setLayoutClean
+\begin{frame}{Sumário}
+    \vspace{0.3cm}
     \tableofcontents
 \end{frame}
 
-% ==========================================================
-\section[UFGBlue]{Visão Geral e Requisitos}
+% =========================================================
+\section{Visão Geral e o Problema da Clínica}
+% =========================================================
 
-% Slide 4: Problema de Negócio e Solução
-\setLayout{horizontal}
-\begin{frame}{Problema de Negócio e Solução Proposta}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \textbf{Desafios Operacionais:}
-        \begin{itemize}
-            \item Conflitos e sobreposição de horários na recepção
-            \item Alto índice de faltas por ausência de lembretes
-            \item Morosidade no cancelamento e na remarcação
-            \item Falta de rastreabilidade e auditoria (LGPD)
+% ---------------------------------------------------------
+% Slide 3: O Problema da Clinica e o que o Sistema Resolve
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{O Problema da Clínica e o que o Sistema Resolve}
+    \begin{columns}[T]
+        \column{0.48\textwidth}
+        \textbf{Problemas da rotina manual (Relatório, Seção 1.2):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{Recepção sobrecarregada:} secretários perdem tempo atendendo ligações para marcar e desmarcar.
+            \item \textbf{Marcações duplas:} sem uma agenda centralizada, dois pacientes acabam marcados no mesmo horário.
+            \item \textbf{Alto número de faltas:} pacientes esquecem da consulta por falta de lembretes práticos.
+            \item \textbf{Perda de histórico:} controles em papel dificultam remanejar horários e não deixam rastros para auditoria.
         \end{itemize}
+        }
 
-        \column{0.5\textwidth}
-        \textbf{Solução Modelada:}
-        \begin{itemize}
-            \item Autoatendimento integrado para pacientes
-            \item Reserva com controle estrito de concorrência
-            \item Notificações paralelas via E-mail e WhatsApp
-            \item Log imutável para eventos críticos de negócio
+        \column{0.48\textwidth}
+        \textbf{Como o sistema resolve na prática:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{Base única de horários:} grade médica dividida em blocos de 30 minutos com consulta em tempo real.
+            \item \textbf{Reserva com trava atômica:} no momento da confirmação, o slot é travado no banco na hora.
+            \item \textbf{Avisos automáticos:} confirmação imediata e lembrete 24 h antes por e-mail e WhatsApp em paralelo.
+            \item \textbf{Auditoria imutável:} registra autor, data/hora, IP e motivo obrigatório para cancelar ou remarcar (LGPD).
         \end{itemize}
+        }
     \end{columns}
 \end{frame}
 
-% Slide 5: Atores do Sistema
-\setLayout{horizontal}
-\begin{frame}{Atores e Perfis de Acesso}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \begin{block}{Paciente (Autoatendimento)}
-            Pesquisa especialidades e médicos, agenda horários livres, cancela e solicita remarcações.
-        \end{block}
-        \vspace{0.6em}
-        \begin{block}{Médico (Corpo Clínico)}
-            Configura disponibilidade semanal, visualiza agenda do dia, inicia atendimentos e encerra consultas.
-        \end{block}
+% ---------------------------------------------------------
+% Slide 4: Os 5 Atores do Sistema e suas Responsabilidades
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{Quem Usa o Sistema: Os 5 Atores e suas Responsabilidades}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{Atores humanos (Relatório, Seção 1.3):}
+        {\scriptsize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{Paciente:} faz autoatendimento pelo navegador, escolhe médico e horário, agenda sozinho e pode cancelar ou remarcar com pelo menos 2 h de antecedência.
+            \item \textbf{Médico:} cadastra sua disponibilidade semanal em slots de 30 min e marca o atendimento (início, fim ou falta). Não agenda nem cancela consultas.
+            \item \textbf{Secretário:} acompanha as agendas, confirma consultas pendentes e pode agendar ou desmarcar para pacientes que ligam na recepção.
+            \item \textbf{Administrador:} cadastra médicos, secretários e ativa especialidades. Não opera consultas.
+        \end{itemize}
+        }
 
-        \column{0.5\textwidth}
-        \begin{block}{Secretário (Recepção)}
-            Atendimento presencial/telefônico, confirmação ativa de agendamentos e bloqueios operacionais.
-        \end{block}
-        \vspace{0.6em}
-        \begin{block}{Administrador (Gestão)}
-            Gerenciamento global de usuários, médicos, clínicas, especialidades e relatórios de auditoria.
-        \end{block}
+        \column{0.48\textwidth}
+        \textbf{Ator secundário:}
+        {\scriptsize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{Sistema de Notificação:} componente em segundo plano que dispara e-mails e mensagens de WhatsApp sem travar o uso da aplicação.
+        \end{itemize}
+        }
+        \vspace{0.15cm}
+        \textbf{Regra de ouro dos perfis:}
+        {\scriptsize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Cada usuário tem exatamente um perfil exclusivo no sistema (\texttt{Perfil}), garantindo que o médico atenda pacientes mas não altere agendas alheias.
+        \end{itemize}
+        }
     \end{columns}
 \end{frame}
 
+% ---------------------------------------------------------
+% Slide 5: Os 6 Modulos do Sistema
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{Como o Sistema Foi Dividido: Os 6 Módulos da Aplicação}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{Módulos de Acesso e Grade (Relatório, Seção 1.4):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2.5pt}
+            \item \textbf{Cadastro e Autenticação:} exige e-mail único para todos, CPF para pacientes e CRM/UF para médicos. Senha com hash criptográfico e bloqueio após erros seguidos.
+            \item \textbf{Consulta e Especialidades:} catálogo público para o paciente buscar especialidades ativas e médicos credenciados.
+            \item \textbf{Agenda do Médico:} organiza a grade em blocos padrão de 30 min (\texttt{LIVRE}, \texttt{BLOQUEADO} ou \texttt{OCUPADO}) entre 30 min e 90 dias no futuro.
+        \end{itemize}
+        }
+
+        \column{0.48\textwidth}
+        \textbf{Módulos de Operação e Mensagens:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2.5pt}
+            \item \textbf{Agendamento:} guia o paciente em 4 passos, faz o lock atômico da vaga e trata cancelamentos e remarcações com motivo obrigatório.
+            \item \textbf{Confirmação (Recepção):} painel para o secretário contatar o paciente e registrar confirmação (opcional: médico atende mesmo sem isso).
+            \item \textbf{Notificação e Auditoria:} fila de envio com retentativas automáticas e log imutável de todas as ações críticas.
+        \end{itemize}
+        }
+    \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------
 % Slide 6: Ciclo de Vida da Consulta
-\setLayout{vertical}
-\begin{frame}{Ciclo de Vida da Consulta}
-    \centering
-    \resizebox{\textwidth}{!}{%
-    \begin{tabular}{llll}
-        \toprule
-        \textbf{Estado Atual} & \textbf{Evento / Ação} & \textbf{Novo Estado} & \textbf{Ator Responsável} \\
-        \midrule
-        --- & Solicitar agendamento & \texttt{AGENDADA} & Paciente / Secretário \\
-        \texttt{AGENDADA} & Confirmar presença & \texttt{CONFIRMADA} & Secretário / Médico \\
-        \texttt{AGENDADA / CONFIRMADA} & Iniciar atendimento & \texttt{EM\_ANDAMENTO} & Médico titular \\
-        \texttt{EM\_ANDAMENTO} & Concluir atendimento & \texttt{REALIZADA} & Médico titular \\
-        \texttt{AGENDADA / CONFIRMADA} & Cancelar ($\ge$ 2 h com motivo) & \texttt{CANCELADA} & Paciente / Secretário \\
-        \texttt{AGENDADA / CONFIRMADA} & Remarcar ($\ge$ 2 h com motivo) & \texttt{REMARCADA} (nova \texttt{AGENDADA}) & Paciente / Secretário \\
-        \texttt{AGENDADA / CONFIRMADA} & Ausência / Não comparecimento & \texttt{NAO\_REALIZADA} & Médico / Sistema automático \\
-        \bottomrule
-    \end{tabular}%
-    }
-    \vspace{0.8em}
-    \begin{itemize}
-        \item \textbf{Estados Finais:} \texttt{REALIZADA}, \texttt{CANCELADA}, \texttt{REMARCADA} e \texttt{NAO\_REALIZADA}.
-        \item \textbf{Regra de Negócio (RN-20):} Cancelamento e remarcação exigem no mínimo 2 horas de antecedência.
-    \end{itemize}
-\end{frame}
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{Ciclo de Vida da Consulta: Os Estados e as Regras de Mudança}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{Como o estado muda (Quadro 1, Seção 1.5):}
+        \vspace{0.1cm}
+        \resizebox{\linewidth}{!}{%
+        \begin{tabular}{lll}
+            \toprule
+            \textbf{Estado Inicial} & \textbf{Ação / Evento} & \textbf{Próximo Estado} \\
+            \midrule
+            --- & agendar & \texttt{AGENDADA} \\
+            \texttt{AGENDADA} & confirmar (opcional) & \texttt{CONFIRMADA} \\
+            \texttt{AGEND./CONF.} & médico chama na sala & \texttt{EM\_ANDAMENTO} \\
+            \texttt{EM\_ANDAMENTO} & médico conclui atendimento & \texttt{REALIZADA} \\
+            \texttt{AGEND./CONF.} & cancelar ($\ge$ 2 h) & \texttt{CANCELADA} \\
+            \texttt{AGEND./CONF.} & remarcar ($\ge$ 2 h) & \texttt{REMARCADA} \\
+            \texttt{AGEND./CONF.} & paciente não compareceu & \texttt{NAO\_REALIZADA} \\
+            \bottomrule
+        \end{tabular}%
+        }
 
-% Slide 7: Notificações e Regras Críticas
-\setLayout{horizontal}
-\begin{frame}{Notificações Multicanal e Concorrência}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \textbf{Comunicação em 2 Canais:}
-        \begin{itemize}
-            \item Disparos assíncronos por E-mail e WhatsApp
-            \item Eventos: Agendamento, Confirmação, Cancelamento, Remarcação e Lembrete (24 h)
-            \item Fila com até 3 tentativas e espaçamento progressivo
-            \item Falha no envio não compromete o agendamento
+        \column{0.48\textwidth}
+        \textbf{Regras estritas de cancelamento (RN-20):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2.5pt}
+            \item \textbf{Prazo mínimo de 2 horas:} se faltar menos de 2 h para o horário marcado, o sistema bloqueia o cancelamento ou remarcação.
+            \item \textbf{Motivo obrigatório:} o paciente ou secretário deve justificar a ação por escrito para gerar histórico.
+            \item \textbf{Liberação imediata:} no cancelamento, o slot volta na hora para \texttt{LIVRE}; na remarcação, a antiga é cancelada e cria-se uma nova.
         \end{itemize}
-
-        \column{0.5\textwidth}
-        \textbf{Restrições e Auditoria:}
-        \begin{itemize}
-            \item Janela mínima de 30 minutos e máxima de 90 dias
-            \item Slots padrões de 30 minutos sem sobreposição
-            \item Bloqueio de horários com justificativa obrigatória
-            \item Log imutável de auditoria com rastreio de IP e autor
-        \end{itemize}
+        }
     \end{columns}
 \end{frame}
 
-% ==========================================================
-\section[Ocean]{Diagrama de Atividades (DA-01)}
+% =========================================================
+\section{Diagrama de Atividades (DA-01)}
+% =========================================================
 
-% Slide 8: DA-01 Imagem
-\setLayout{vertical}
-\begin{frame}{DA-01 --- Agendamento de Consulta}
-    \centering
-    \vspace{0.1cm}
-    \includegraphics[width=\textwidth,height=5.8cm,keepaspectratio]{DA01_Agendamento.pdf}
-\end{frame}
+% ---------------------------------------------------------
+% Slide 7: DA-01 Visao Geral (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DA-01 --- Visão Geral do Fluxo de Agendamento (Completo)}{DA01_visao_geral.png}
 
-% Slide 9: DA-01 Mecânica Operacional
-\setLayout{horizontal}
-\begin{frame}{DA-01 --- Mecânica Operacional e Concorrência}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \textbf{Organização em Raias:}
-        \begin{itemize}
-            \item \textbf{Paciente:} autenticação, seleção e confirmação
-            \item \textbf{Sistema:} validação, reserva atômica e auditoria
-            \item \textbf{Notificação:} processamento assíncrono paralelo
-        \end{itemize}
-        \vspace{0.5em}
-        \textbf{Desacoplamento por Fork/Join:}
-        \begin{itemize}
-            \item Comprovante emitido de forma imediata
-            \item Paciente não aguarda resposta das operadoras
-        \end{itemize}
+% ---------------------------------------------------------
+% Slide 8: DA-01 Ampliacao Regiao 1 (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DA-01 (Fase 1) --- Escolha do Médico, Horários Livres e Janela}{DA01_regiao1.png}
 
-        \column{0.5\textwidth}
-        \textbf{Prevenção de Colisões:}
-        \begin{itemize}
-            \item Bloqueio instantâneo do slot na confirmação
-            \item Repetição (\texttt{repeat}) em horários tomados
-            \item Sugestão de novas datas em ausência de vagas
+% ---------------------------------------------------------
+% Slide 9: Decisoes de Modelagem DA-01 Regiao 1
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{O Início do Agendamento: Filtros na Grade e Validação da Janela}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{O que o paciente faz (Relatório, Seção 2.1):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Faz login com e-mail e senha (se já estiver logado, o fluxo segue direto).
+            \item Escolhe a especialidade ativa no catálogo e em seguida escolhe o médico.
+            \item O sistema carrega os horários livres dentro do expediente daquele médico (até 90 dias).
         \end{itemize}
-        \vspace{0.5em}
-        \textbf{Mecanismo de Rollback:}
-        \begin{itemize}
-            \item Em falha de gravação, o horário volta a \texttt{LIVRE}
+        }
+        \vspace{0.1cm}
+        \textbf{Decisão de modelagem:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Filtro em cascata na raia do \texttt{Sistema} para não misturar médicos de áreas diferentes.
         \end{itemize}
+        }
+
+        \column{0.48\textwidth}
+        \textbf{O que acontece se algo der errado:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{Sem vagas (Fluxo A1):} o sistema sugere as próximas datas com horários livres; o paciente pode tentar outro período ou desistir.
+            \item \textbf{Fora da janela (Fluxo E3):} se o paciente tentar marcar com menos de 30 min ou além de 90 dias (RN-13), o sistema bloqueia e explica a regra.
+        \end{itemize}
+        }
+        \vspace{0.1cm}
+        \textbf{Evidência no diagrama:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Nós de decisão com caminhos em rosa (A1 e E3) e retorno para a grade.
+        \end{itemize}
+        }
     \end{columns}
 \end{frame}
 
-% Slide 10: DA-01 Tabela de Fluxos Alternativos
-\setLayout{vertical}
-\begin{frame}{DA-01 --- Mapeamento de Exceções e Desvios}
-    \centering
-    \resizebox{\textwidth}{!}{%
-    \begin{tabular}{lp{10.5cm}}
-        \toprule
-        \textbf{Identificador} & \textbf{Tratamento no Fluxo do Diagrama} \\
-        \midrule
-        \textbf{A1 --- Sem Horários} & Sugestão automática de datas alternativas pelo sistema; permite reescolha ou saída. \\
-        \textbf{A2 --- Conflito no Slot} & Horário ocupado concorrentemente; emite aviso amigável e retorna à seleção. \\
-        \textbf{A3 --- Falha de Notificação} & Até 3 tentativas automáticas por canal; se esgotar, marca \texttt{FALHOU} sem desfazer a consulta. \\
-        \textbf{E1 --- Sessão Expirada} & Solicita reautenticação imediata e restaura o resumo previamente preenchido. \\
-        \textbf{E2 --- Erro de Persistência} & Falha ao gravar no banco; cancela operação, libera o slot (\texttt{LIVRE}) e alerta o usuário. \\
-        \textbf{E3 --- Fora da Janela} & Seleção anterior a 30 min ou posterior a 90 dias; bloqueia seleção com mensagem clara. \\
-        \bottomrule
-    \end{tabular}%
-    }
-\end{frame}
+% ---------------------------------------------------------
+% Slide 10: DA-01 Ampliacao Regiao 2 (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DA-01 (Fase 2) --- Resumo, Lock Atômico do Horário e Rollback}{DA01_regiao2.png}
 
-% ==========================================================
-\section[DarkPurple]{Diagrama de Sequência (DS-01)}
+% ---------------------------------------------------------
+% Slide 11: Decisoes de Modelagem DA-01 Regiao 2
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{Reserva da Vaga: Concorrência e Tratamento de Erros}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{Prevenção de Concorrência (RN-08 e RN-10):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{1.5pt}
+            \item Dois pacientes podem ver a mesma vaga ao mesmo tempo. Se a checagem não for atômica, ambos confirmam o mesmo horário.
+            \item O sistema exibe o resumo; ao confirmar, aplica \textbf{lock atômico} no banco: ocupa o slot naquele milissegundo.
+            \item Se a sessão expirou enquanto ele pensava, exige login mantendo os dados selecionados na tela.
+        \end{itemize}
+        }
 
-% Slide 11: DS-01 Imagem
-\setLayout{vertical}
-\begin{frame}{DS-01 --- Agendamento de Consulta (Fluxo Completo)}
-    \centering
-    \vspace{0.1cm}
-    \includegraphics[width=\textwidth,height=5.8cm,keepaspectratio]{DS01_Agendamento.pdf}
-\end{frame}
-
-% Slide 12: DS-01 Reserva Atômica e Notificação
-\setLayout{horizontal}
-\begin{frame}{DS-01 --- Interação e Reserva Atômica}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \textbf{Objetos e Responsabilidades:}
-        \begin{itemize}
-            \item \textbf{Controlador Sistema:} orquestra tela e regras de negócio
-            \item \textbf{Agenda / Horario:} verificação de grade e estado
-            \item \textbf{Consulta / Notificacao:} instanciados dinamicamente (\texttt{<<create>>})
+        \column{0.48\textwidth}
+        \textbf{Tratamento dos desvios (caminhos em rosa):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{1.5pt}
+            \item \textbf{Vaga tomada por outro (Fluxo A2):} o sistema avisa ``Este horário acabou de ser ocupado'' e volta para a escolha de horários.
+            \item \textbf{Falha ao gravar no banco (Fluxo E2):} faz rollback total; o horário volta a ficar \texttt{LIVRE} e avisa o erro na tela.
+            \item \textbf{Evidência no diagrama:} decisões ``Slot ainda disponível?'' e ``Persistência bem-sucedida?''.
         \end{itemize}
-        \vspace{0.4em}
-        \textbf{Reserva Atômica (Mensagem 17):}
-        \begin{itemize}
-            \item \texttt{Horario.reservar()}: operação única atômica
-            \item Elimina risco de \emph{race condition} no banco
-        \end{itemize}
-
-        \column{0.5\textwidth}
-        \textbf{Rollback e Resiliência:}
-        \begin{itemize}
-            \item Mensagem 25: \texttt{Horario.liberar()} reverte o slot caso ocorra falha de gravação (E2)
-        \end{itemize}
-        \vspace{0.4em}
-        \textbf{Paralelismo Concorrente:}
-        \begin{itemize}
-            \item Fragmento \texttt{par}: canais operam de modo independente
-            \item Loop com até 3 tentativas e backoff em cada canal
-            \item Comprovante na tela (msg 28) sem bloquear o paciente
-        \end{itemize}
+        }
     \end{columns}
 \end{frame}
 
-% Slide 13: DS-01 Mapeamento Mensagens
-\setLayout{vertical}
-\begin{frame}{DS-01 --- Rastreabilidade de Mensagens e Cenários}
-    \centering
-    \resizebox{\textwidth}{!}{%
-    \begin{tabular}{cll}
-        \toprule
-        \textbf{Mensagens} & \textbf{Cenário / Regra Coberta} & \textbf{Comportamento dos Objetos} \\
-        \midrule
-        1 a 8 & Autenticação e Catálogo & Paciente recebe lista de especialidades e médicos ativos \\
-        9 a 12 & Consulta de Grade & \texttt{Agenda.getHorariosLivres()} --- trata \textbf{A1} (sem horários) \\
-        13 a 16 & Validação da Janela e Sessão & Bloqueio se fora da janela (\textbf{E3}) e revalidação de sessão (\textbf{E1}) \\
-        17 a 22 & Reserva e Conflito & \texttt{Horario.reservar()} --- trata \textbf{A2} (slot ocupado simultaneamente) \\
-        23 a 28 & Persistência e Confirmação & Criação da \texttt{Consulta}, log em \texttt{Auditoria} e rollback (\textbf{E2}) \\
-        29 a 45 & Notificação Concorrente & Bloco \texttt{par} (E-mail e WhatsApp) com loops de repetição (\textbf{A3}) \\
-        \bottomrule
-    \end{tabular}%
-    }
-\end{frame}
+% ---------------------------------------------------------
+% Slide 12: DA-01 Ampliacao Regiao 3 (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DA-01 (Fase 3) --- Comprovante em Tela e Notificações Assíncronas}{DA01_regiao3.png}
 
-% ==========================================================
-\section[DarkOrange]{Diagrama de Classes (DC)}
-
-% Slide 14: DC Imagem
-\setLayout{vertical}
-\begin{frame}{DC --- Diagrama de Classes (Nível Macro)}
-    \centering
-    \vspace{0.1cm}
-    \includegraphics[width=\textwidth,height=5.8cm,keepaspectratio]{DC_Classes.pdf}
-\end{frame}
-
-% Slide 15: DC Herança e Perfis
-\setLayout{horizontal}
-\begin{frame}{DC --- Estrutura de Perfis e Herança}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \begin{block}{Classe Abstrata \texttt{Usuario}}
-            Centraliza os atributos universais protegidos (\texttt{\#}):
-            \begin{itemize}
-                \item Identificação: \texttt{id}, \texttt{nome}, \texttt{telefone}
-                \item Segurança: \texttt{email} \{unique\}, \texttt{senhaHash}
-                \item Controle: \texttt{status}, \texttt{criadoEm}
-                \item Métodos: \texttt{autenticar()}, \texttt{alterarSenha()}
-            \end{itemize}
-        \end{block}
-
-        \column{0.5\textwidth}
-        \textbf{Especialização dos Perfis:}
-        \begin{itemize}
-            \item \textbf{Paciente:} adiciona \texttt{cpf} \{unique\} e métodos de agendamento e cancelamento
-            \item \textbf{Medico:} adiciona \texttt{crm}, \texttt{ufCrm} e controle de consultas
-            \item \textbf{Secretario:} adiciona matrícula funcional e gestão de confirmações
-            \item \textbf{Administrador:} métodos exclusivos para parametrização clínica
+% ---------------------------------------------------------
+% Slide 13: Decisoes de Modelagem DA-01 Regiao 3
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{Comprovante e Mensagens: Por que o Envio é em Paralelo}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{O problema de rede que precisava resolver:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Provedores de e-mail e APIs de WhatsApp podem oscilar ou demorar segundos. O paciente não pode ficar com a tela travada esperando isso.
         \end{itemize}
+        }
+        \vspace{0.1cm}
+        \textbf{Como o sistema resolve com bifurcação (fork/join):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Ao gravar a consulta, o fluxo se divide em duas partes que andam ao mesmo tempo:
+            \item \textbf{Ramo 1:} O paciente vê o comprovante com o código da consulta na hora na tela.
+            \item \textbf{Ramo 2:} O \texttt{Sistema de Notificação} cuida do envio em segundo plano.
+        \end{itemize}
+        }
+
+        \column{0.48\textwidth}
+        \textbf{Envio resiliente por canal (Fluxo A3, RN-25 a RN-28):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item E-mail e WhatsApp disparam em paralelo; cada canal tenta até 3 vezes com tempo de espera (\textit{backoff}).
+            \item Se o WhatsApp falhar após 3 tentativas, ele fica marcado como \texttt{FALHOU}, mas o e-mail continua e a consulta permanece \texttt{AGENDADA}.
+        \end{itemize}
+        }
+        \vspace{0.1cm}
+        \textbf{Evidência no diagrama:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Barras de \textit{fork/join} e laços com cláusula \texttt{backward:Aguardar}.
+        \end{itemize}
+        }
     \end{columns}
 \end{frame}
 
-% Slide 16: DC Composições e Relacionamentos
-\setLayout{horizontal}
-\begin{frame}{DC --- Composições e Associações Críticas}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \textbf{Composições Estritas ($\blacklozenge$):}
-        \begin{itemize}
-            \item \textbf{Medico $\blacklozenge$ Agenda (1:1):} ciclo de vida dependente do vínculo médico
-            \item \textbf{Agenda $\blacklozenge$ Horario (1:1..*):} slots pertencem unicamente à agenda-mãe
-            \item \textbf{Consulta $\blacklozenge$ Notificacao (1:0..*):} registros de envio vinculados à consulta
-        \end{itemize}
+% =========================================================
+\section{Diagrama de Sequência (DS-01)}
+% =========================================================
 
-        \column{0.5\textwidth}
-        \textbf{Associações Estruturais:}
-        \begin{itemize}
-            \item \textbf{Horario -- Consulta (1:0..*):} slot retém histórico completo (máx. 1 consulta ativa)
-            \item \textbf{Consulta -- Consulta (0..1:0..1):} autoassociação reflexiva \texttt{remarcadaDe}
-            \item \textbf{Usuario -- Auditoria (1:0..*):} associação simples para perenidade dos logs (LGPD)
+% ---------------------------------------------------------
+% Slide 14: DS-01 Visao Geral (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DS-01 --- Visão Geral das 45 Mensagens entre Objetos (Completo)}{DS01_visao_geral.png}
+
+% ---------------------------------------------------------
+% Slide 15: DS-01 Ampliacao Regiao 1 (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DS-01 (Msgs 1 a 14) --- Montagem da Grade e Desvios Iniciais}{DS01_regiao1.png}
+
+% ---------------------------------------------------------
+% Slide 16: Decisao de Modelagem DS-01 Regiao 1
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{Troca de Mensagens Inicial: Como a Grade é Montada}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{O papel do participante `Sistema' (Relatório, Seção 3.1):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Funciona como controlador da aplicação. Ele recebe as ações da tela e delega para as classes de negócio, sem misturar detalhes visuais com o domínio.
         \end{itemize}
+        }
+        \vspace{0.1cm}
+        \textbf{Como as mensagens circulam (Msgs 1 a 9):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \texttt{Paciente} chama \texttt{iniciarAgendamento()}; o \texttt{Sistema} retorna especialidades e médicos ativos.
+            \item Ao selecionar o médico, o \texttt{Sistema} consulta os horários da \texttt{Agenda}.
+            \item A \texttt{Agenda} roda um laço (\texttt{loop}) chamando \texttt{Horario.estaDisponivel()} para cada slot.
+        \end{itemize}
+        }
+
+        \column{0.48\textwidth}
+        \textbf{Desvios representados:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{Sem vagas (Msg 10 / A1):} o \texttt{Sistema} sugere novas datas com vagas ao paciente.
+            \item \textbf{Fora da janela (Msg 13 / E3):} \texttt{Sistema} chama \texttt{bloquearSelecao(restrição)}.
+            \item \textbf{Tudo certo (Msg 14):} \texttt{Sistema} entrega \texttt{exibirResumo(...)}.
+        \end{itemize}
+        }
+        \vspace{0.1cm}
+        \textbf{Evidência no diagrama:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Mensagens numeradas 1 a 14 e fragmentos \texttt{loop} e \texttt{alt}.
+        \end{itemize}
+        }
     \end{columns}
 \end{frame}
 
-% Slide 17: DC Enumerações
-\setLayout{horizontal}
-\begin{frame}{DC --- Domínios Blindados (9 Enumerações)}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \textbf{Controle de Acesso e Entidades:}
-        \begin{itemize}
-            \item \texttt{Perfil}: restringe contas a 4 perfis estritos
-            \item \texttt{StatusUsuario}: \texttt{ATIVO}, \texttt{INATIVO}, \texttt{BLOQUEADO}
-            \item \texttt{StatusEspecialidade}: \texttt{ATIVA}, \texttt{INATIVA}
-            \item \texttt{DiaSemana}: parametrização da grade do médico
-        \end{itemize}
+% ---------------------------------------------------------
+% Slide 17: DS-01 Ampliacao Regiao 2 (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DS-01 (Msgs 15 a 28) --- Operação Horario.ocupar() e Rollback}{DS01_regiao2.png}
 
-        \column{0.5\textwidth}
-        \textbf{Estados Clínicos e Mensageria:}
-        \begin{itemize}
-            \item \texttt{StatusConsulta}: 7 estados do ciclo de vida
-            \item \texttt{SituacaoHorario}: \texttt{LIVRE}, \texttt{BLOQUEADO}, \texttt{OCUPADO}
-            \item \texttt{TipoEvento}: gatilhos padronizados de disparo
-            \item \texttt{Canal}: \texttt{EMAIL} ou \texttt{WHATSAPP}
-            \item \texttt{StatusEntrega}: \texttt{PENDENTE}, \texttt{ENVIADA}, \texttt{FALHOU}
+% ---------------------------------------------------------
+% Slide 18: Decisao de Modelagem DS-01 Regiao 2
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{A Confirmação no Código: Chamada ocupar() e Rollback}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{Como a trava atômica funciona no código (Msgs 17 e 18):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item O paciente chama \texttt{agendar(...)}. O \texttt{Sistema} chama direto \texttt{Horario.ocupar()}.
+            \item Se outro paciente chegou primeiro, o método lança na hora a exceção \texttt{HorarioIndisponivelException}.
+            \item O sistema captura a exceção, recarrega a grade e avisa o paciente (A2). Não há brecha de tempo entre checar e ocupar.
         \end{itemize}
+        }
+
+        \column{0.48\textwidth}
+        \textbf{Criação da consulta e rollback em erro (Msgs 23 a 28):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item A \texttt{Consulta} só é instanciada via \texttt{<<create>>} depois que o horário já foi ocupado com sucesso.
+            \item Se a gravação no banco der erro (E2), o \texttt{Sistema} chama \texttt{Horario.liberar()}; o horário volta a ser \texttt{LIVRE} e nada é enviado.
+            \item Se gravou com sucesso, chama \texttt{Auditoria.registrar(CONSULTA\_CRIADA)}.
+        \end{itemize}
+        }
+        \vspace{0.1cm}
+        \textbf{Evidência no diagrama:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Chamadas síncronas com retorno tracejado e blocos \texttt{alt/else}.
+        \end{itemize}
+        }
     \end{columns}
 \end{frame}
 
-% ==========================================================
-\section[DarkGreen]{Considerações Finais}
+% ---------------------------------------------------------
+% Slide 19: DS-01 Ampliacao Regiao 3 (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DS-01 (Msgs 29 a 45) --- Paralelismo (par) e Retentativas com Backoff}{DS01_regiao3.png}
 
-% Slide 18: Síntese e Resultados
-\setLayout{horizontal}
-\begin{frame}{Síntese e Decisões de Modelagem}
-    \begin{columns}
-        \column{0.5\textwidth}
-        \textbf{Consistência e Qualidade:}
-        \begin{itemize}
-            \item 100\% de rastreabilidade entre RFs, RNs e diagramas UML
-            \item Eliminação de concorrência com reserva atômica de slots
-            \item Modelo desacoplado para notificações assíncronas
-            \item Domínio fortemente tipado sem strings mágicas
+% ---------------------------------------------------------
+% Slide 20: Decisao de Modelagem DS-01 Regiao 3
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{Envio das Mensagens no Código: Bloco par e Retentativas}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{Criação dos objetos de notificação (Msgs 29 e 30):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item O sistema cria duas instâncias de \texttt{Notificacao} com status inicial \texttt{PENDENTE}: uma para \texttt{EMAIL} e outra para \texttt{WHATSAPP}.
         \end{itemize}
+        }
+        \vspace{0.1cm}
+        \textbf{Por que usamos o bloco `par' e setas abertas (`->>'):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item O fragmento \texttt{par} executa três coisas ao mesmo tempo: entrega do comprovante (Msg 31), envio por e-mail e envio por WhatsApp.
+            \item As setas abertas indicam chamadas assíncronas: o sistema dispara para o \texttt{Sistema de Notificação} e libera o paciente na hora.
+        \end{itemize}
+        }
 
-        \column{0.5\textwidth}
-        \textbf{Conformidade e Extensibilidade:}
-        \begin{itemize}
-            \item Diagramação aderente ao padrão UML 2.5
-            \item Rastreabilidade de auditoria em conformidade com LGPD
-            \item Base sólida para evolução arquitetural (ex: pagamentos, telemedicina e filas de espera)
+        \column{0.48\textwidth}
+        \textbf{Laços de repetição com `break' (Msgs 32 a 45):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Cada canal roda seu próprio laço com até 3 tentativas e tempo de espera entre elas.
+            \item Se a entrega for confirmada, o \texttt{break} encerra o laço daquele canal.
+            \item Se falhar 3 vezes, fica como \texttt{FALHOU}, sem afetar a consulta nem o outro canal.
         \end{itemize}
+        }
+        \vspace{0.1cm}
+        \textbf{Evidência no diagrama:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Fragmentos \texttt{par}, \texttt{loop}, \texttt{break} e setas abertas (\texttt{->>}).
+        \end{itemize}
+        }
     \end{columns}
 \end{frame}
 
-% Slide 19: Conclusão / Dúvidas
+% =========================================================
+\section{Diagrama de Classes (DC)}
+% =========================================================
+
+% ---------------------------------------------------------
+% Slide 21: DC Visao Geral (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DC --- Visão Geral das 11 Classes e 9 Enumerações (Completo)}{DC_visao_geral.png}
+
+% ---------------------------------------------------------
+% Slide 22: DC Ampliacao Regiao 1 (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DC (Perfis) --- Herança a Partir da Classe Abstrata Usuario}{DC_regiao1.png}
+
+% ---------------------------------------------------------
+% Slide 23: Decisoes de Modelagem DC Regiao 1
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{A Hierarquia de Perfis: Por que Usamos Herança}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{A classe abstrata `Usuario' e atributos protegidos (\#):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Ninguém no sistema é só um usuário genérico; por isso ela é abstrata e não pode ser criada diretamente.
+            \item Centraliza o que todos têm: \texttt{id}, \texttt{nome}, \texttt{email} único, \texttt{senhaHash}, \texttt{telefone} e \texttt{status}.
+            \item Os atributos usam \texttt{\#} (protegidos) para que as subclasses herdem e usem direto, sem expor métodos públicos perigosos.
+        \end{itemize}
+        }
+
+        \column{0.48\textwidth}
+        \textbf{O que cada perfil acrescenta de concreto (Relatório, Seção 4.1):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \texttt{Paciente}: adiciona \texttt{cpf} único e métodos para \texttt{agendar()}, \texttt{cancelar()} e \texttt{remarcar()}.
+            \item \texttt{Medico}: adiciona \texttt{crm} e \texttt{ufCrm}, e métodos para \texttt{definirDisponibilidade()} e atender consultas.
+            \item \texttt{Secretario}: adiciona \texttt{matricula} e métodos para confirmar ou agendar por telefone.
+            \item \texttt{Administrador}: métodos exclusivos para cadastrar médicos, secretários e especialidades.
+        \end{itemize}
+        }
+    \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------
+% Slide 24: DC Ampliacao Regiao 2 (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DC (Clínica) --- Composições, Histórico de Horários e Auditoria}{DC_regiao2.png}
+
+% ---------------------------------------------------------
+% Slide 25: Decisoes de Modelagem DC Regiao 2
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{Composições, Histórico de Horários e Auditoria}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{Composições no Modelo (Relatório, Seção 4.1):}
+        {\scriptsize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{Médico $\to$ Agenda (1:1):} a agenda pertence ao médico; sem o profissional, ela perde a razão de existir.
+            \item \textbf{Agenda $\to$ Horário (1:1..*):} os blocos de 30 min pertencem exclusivamente à agenda que os gerou.
+            \item \textbf{Consulta $\to$ Notificação (1:0..*):} as mensagens são filhas diretas dos eventos daquela consulta.
+        \end{itemize}
+        }
+        \vspace{0.1cm}
+        \textbf{Exceção: Associação Simples (LGPD):}
+        {\scriptsize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{Usuário -- Auditoria:} propositalmente \textbf{não} é composição para preservar os logs mesmo se a conta for excluída.
+        \end{itemize}
+        }
+
+        \column{0.48\textwidth}
+        \textbf{Relação Horário $\to$ Consulta (1 para 0..*):}
+        {\scriptsize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Um mesmo horário guarda o histórico de todas as consultas que passaram por ele, mas admite \textbf{no máximo uma consulta ativa}.
+            \item \textbf{Autoassociação \texttt{remarcadaDe} (0..1 para 0..1):} a nova consulta aponta para a consulta cancelada anterior.
+            \item \textbf{Rastreabilidade:} associações \texttt{confirmadaPor} e \texttt{canceladaPor} com \texttt{Usuario}.
+        \end{itemize}
+        }
+    \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------
+% Slide 26: DC Ampliacao Regiao 3 (Tela Cheia)
+% ---------------------------------------------------------
+\slideDiagrama{DC (Enumerações) --- Os 9 Tipos Enumerados do Domínio}{DC_regiao3.png}
+
+% ---------------------------------------------------------
+% Slide 27: Decisoes de Modelagem DC Regiao 3
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{Enumerações e Controle dos Estados do Sistema}
+    \begin{columns}[T]
+        \column{0.50\textwidth}
+        \textbf{Por que usamos 9 enumerações em vez de texto livre:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item Elimina erros de digitação e impede estados inválidos no banco de dados e no código da aplicação.
+        \end{itemize}
+        }
+        \vspace{0.1cm}
+        \textbf{O que cada enumeração controla (Relatório, Seção 4.1):}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \texttt{Perfil}: trava as contas em \texttt{PACIENTE}, \texttt{MEDICO}, \texttt{SECRETARIO} ou \texttt{ADMINISTRADOR}.
+            \item \texttt{StatusUsuario}: \texttt{ATIVO}, \texttt{INATIVO} ou \texttt{BLOQUEADO} (após sucessivas senhas erradas).
+            \item \texttt{StatusEspecialidade}: \texttt{ATIVA} ou \texttt{INATIVA}.
+            \item \texttt{DiaSemana}: parametriza os dias de atendimento na agenda do médico.
+        \end{itemize}
+        }
+
+        \column{0.48\textwidth}
+        \textbf{Estados da grade e do atendimento:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \texttt{SituacaoHorario}: \texttt{LIVRE}, \texttt{BLOQUEADO} (pelo médico) ou \texttt{OCUPADO} (com consulta).
+            \item \texttt{StatusConsulta}: os 7 estados do ciclo (\texttt{AGENDADA}, \texttt{CONFIRMADA}, \texttt{EM\_ANDAMENTO}, \texttt{REALIZADA}, \texttt{CANCELADA}, \texttt{REMARCADA}, \texttt{NAO\_REALIZADA}).
+            \item \texttt{TipoEvento}: gatilho do disparo de mensagens.
+            \item \texttt{Canal}: limita a \texttt{EMAIL} ou \texttt{WHATSAPP}.
+            \item \texttt{StatusEntrega}: \texttt{PENDENTE}, \texttt{ENVIADA} ou \texttt{FALHOU}.
+        \end{itemize}
+        }
+    \end{columns}
+\end{frame}
+
+% =========================================================
+\section{Conclusão e Apêndices}
+% =========================================================
+
+% ---------------------------------------------------------
+% Slide 28: Apendices Normativos do Relatorio
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{O que Está Especificado nos Apêndices do Trabalho}
+    \begin{columns}[T]
+        \column{0.48\textwidth}
+        \textbf{Apêndice A --- Requisitos e Regras de Negócio:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{21 Requisitos Funcionais (RF):} detalham tela por tela o que o sistema deve fazer (cadastro, busca, grade, reserva, confirmação e alertas).
+            \item \textbf{28 Regras de Negócio (RN):} definem as travas reais (antecedência $\ge 30\text{ min}$ para agendar, limite de 90 dias, prazo de 2 h para cancelar com motivo).
+            \item Todos os nós e mensagens dos diagramas vieram diretamente dessas regras documentadas.
+        \end{itemize}
+        }
+
+        \column{0.48\textwidth}
+        \textbf{Apêndice B --- Códigos PlantUML dos Diagramas:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{Fontes originais em texto:} arquivos completos dos diagramas DA-01, DS-01 e DC.
+            \item \textbf{Controle de versão no Git:} permite versionar a modelagem junto com o código do projeto.
+            \item \textbf{Conformidade ABNT NBR 14724:} documentação técnica que garante reprodutibilidade total.
+        \end{itemize}
+        }
+    \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------
+% Slide 29: Convergencia dos Modelos e Consideracoes Finais
+% ---------------------------------------------------------
+\setLayoutClean
+\begin{frame}{Como os Três Modelos se Conectam na Prática}
+    \begin{columns}[T]
+        \column{0.48\textwidth}
+        \textbf{O papel de cada diagrama no projeto:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{DA-01 (Atividades):} mostrou a jornada do paciente na tela, onde ele toma decisões e o que acontece quando algo dá errado (vaga ocupada, sessão expirada).
+            \item \textbf{DS-01 (Sequência):} mostrou como o código resolve isso em tempo de execução, chamando \texttt{ocupar()} de forma atômica e disparando notificações em paralelo.
+            \item \textbf{DC (Classes):} amarrou tudo na estrutura de objetos, com tipos fortes nas 9 enumerações, composições onde o ciclo de vida depende e herança protegida.
+        \end{itemize}
+        }
+
+        \column{0.48\textwidth}
+        \textbf{O que a modelagem garantiu antes de codificar:}
+        {\footnotesize
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{Sem corrida crítica:} conflitos de dois pacientes na mesma vaga foram eliminados no modelo.
+            \item \textbf{Tolerância a falhas:} lentidão de redes externas não derruba o agendamento.
+            \item \textbf{Rastreabilidade total:} conformidade com a LGPD prevista desde a concepção das classes.
+        \end{itemize}
+        }
+    \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------
+% Slide 30: Encerramento
+% ---------------------------------------------------------
 \setLayout{blank}
 \setBGColor{UFGBlue}
 \begin{frame}[noframenumbering]{}
     \centering
-    \vspace{1.5cm}
-    {\Huge \textbf{Obrigado!}}\\[1.0cm]
-    {\Large Sistema de Agendamento de Consultas Médicas}\\[0.4cm]
-    {\normalsize Modelagem de Software --- APS 1 | UFG / INF (2026/2)}\\[1.2cm]
-    {\large \textbf{Dúvidas e Discussão}}
+    \vspace{0.6cm}
+    {\Huge \textbf{Obrigado!}}\par\vspace{0.4cm}
+    {\Large Sistema de Agendamento de Consultas Médicas}\par\vspace{0.2cm}
+    {\normalsize Modelagem de Software -- APS 1 | UFG / INF (2026/2)}\par\vspace{1.5cm}
+    {\large \textbf{Dúvidas e Discussão}}\par\vspace{0.5cm}
+    \includegraphics[width=0.42\textwidth]{lib/logos/ES-INF-full-white.png}
 \end{frame}
 
 \end{document}
